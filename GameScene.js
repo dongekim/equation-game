@@ -2,6 +2,7 @@ import { Preloader } from "/Preloader.js";
 
 let numPadGrid = [];
 let operatorPadGrid = [];
+const solutions = [];
 
 class GameScene extends Phaser.Scene {
     constructor() {
@@ -25,9 +26,23 @@ class GameScene extends Phaser.Scene {
             }
         };
 
+        this.add.text(800, 250, userAnswer);
+        let userAnswer;
+
         //Response to each numPad button press | WIP MAKE CASES FOR WHEN . 0 / ARE PRESSED
         for(let idx = 0; idx < numPadGrid.length; idx++) {
-            numPadGrid[idx].on('pointerdown', () => {this.add.text(800, 300, `Pressed ${idx + 1}`)});
+            if(idx < 9) {
+                //numPadGrid[idx].on('pointerdown', () => {this.add.text(800, 300, `Pressed ${idx + 1}`)});
+                numPadGrid[idx].on('pointerdown', () => {
+                    for(let digits = 0; digits < 2; digits ++)
+                        {this.add.text(800 + (digits * 20), 300, idx)}
+                    }
+                );
+            }
+            else if (idx === 9) {
+                //numPadGrid[idx].on('pointerdown', () => {this.add.text(800, 300, `Pressed .`)});
+                numPadGrid[idx].on('pointerdown', () => {this.add.text(800, 300, `.`)});
+            }
         };
 
         for(let row = 0; row < 2; row++){
@@ -35,6 +50,8 @@ class GameScene extends Phaser.Scene {
                this.createOperatorPad(600, 400, row, col);
             }
         };
+
+
 
 
 
@@ -58,6 +75,15 @@ class GameScene extends Phaser.Scene {
 
         let term1 = Math.floor((Math.random()+1) * 30);
         let term2 = Math.floor((Math.random()+1) * 30);
+
+        if (chosenSign === '+') {
+            solutions.push('-' + term1);
+            solutions.push('/' + coefficient);
+        }
+        else if (chosenSign === '-') {
+            solutions.push('+' + term1);
+            solutions.push('/' + coefficient);
+        }
 
 
         return `${coefficient}${chosenVariable} ${chosenSign} ${term1} = ${term2}`;
