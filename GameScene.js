@@ -9,12 +9,16 @@ class GameScene extends Phaser.Scene {
         super({ key: 'GameScene' })
     }
 
-    /*
-    preload() {}
-    */
+    
+    preload()
+    {
+        //this.load.bitmapFont('VCR', 'assets/VCR_osd.png', 'assets/VCR_osd.xml');
+    }
+    
 
     create() 
     {
+        /*
         //Loads math problem as text on screen
         let currentText = this.createProblem();
         this.add.text(800, 200, currentText, { fill: '#FFFFFF', font: '80px Helvetica' }).setOrigin(0.5);
@@ -50,6 +54,41 @@ class GameScene extends Phaser.Scene {
                this.createOperatorPad(600, 400, row, col);
             }
         };
+        */
+       const numbers = [
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+        ['.', 0, '/']
+       ];
+
+       const cursor = { x: 0, y: 0 };
+       let userInput = '';
+       
+       const numberGrid = this.add.bitmapText(500, 300, 'VCR_osd_mono','123\n456\n789\n.0/', 50).setLetterSpacing(32);
+       numberGrid.setTint(0x39e75f);
+       numberGrid.setInteractive();
+        
+       const block = this.add.graphics();
+       block.lineStyle(2, 0xFFFFFF, 1); // Line width, color, and alpha
+       block.strokeRect(block.x, block.y, 50, 50);
+       
+       
+        numberGrid.on('pointermove', (pointer, x, y) => 
+        {
+            const localX = pointer.x - numberGrid.x;
+            const localY = pointer.y - numberGrid.y;
+            
+            const cx = Phaser.Math.Snap.Floor(localX, 52, 0, true);
+            const cy = Phaser.Math.Snap.Floor(localY, 52, 0, true);
+            //const char = numberGrid[cy][cx];
+
+            cursor.x = cx;
+            cursor.y = cy;
+            block.x = numberGrid.x - 10 + (cx * 52);
+            block.y = numberGrid.y - 2 + (cy * 52);
+
+        }, this);
 
 
 
@@ -64,6 +103,7 @@ class GameScene extends Phaser.Scene {
     }
 
 
+    /*
     createProblem() {
         let coefficient = Math.floor((Math.random()+1) * 10);
         
@@ -147,6 +187,7 @@ class GameScene extends Phaser.Scene {
         operatorPad.on('pointerout', () => {operatorPad.setBackgroundColor('#FFFFFF');});
         operatorPadGrid.push(operatorPad);
     }
+    */
 
 
 
