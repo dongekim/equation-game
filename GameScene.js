@@ -41,6 +41,7 @@ class GameScene extends Phaser.Scene {
 
        const cursor = { x: 0, y: 0 };
        let userInput = '';
+       const errorMsg = 'Incorrect';
        
        //Displays the number pad as a bitmapText object with each row separated by a newline
        const numPad = this.add.bitmapText(800, 400, 'VCR_osd_mono','123\n456\n789\n.0/', 50).setLetterSpacing(32);
@@ -53,7 +54,7 @@ class GameScene extends Phaser.Scene {
        block.strokeRect(block.x, block.y, 50, 50);
        
        //Displays user selected numbers on screen
-       const userInputText = this.add.bitmapText(600, currentProblemText.y + 100, 'VCR_osd_mono', userInput, 50).setLetterSpacing(0);
+       let userInputText = this.add.bitmapText(600, currentProblemText.y + 100, 'VCR_osd_mono', '', 50).setLetterSpacing(0);
        
        //Event listeners to highlight hovered keys 
        numPad.on('pointermove', (pointer) => 
@@ -91,6 +92,7 @@ class GameScene extends Phaser.Scene {
         const sidePad = this.add.bitmapText(numPad.x + 150 + 20, numPad.y + 8, 'VCR_osd_mono', 'DEL\n\nENTER', 32).setLetterSpacing(0);
         sidePad.setInteractive();
 
+        //DEL and ENTER key hover highlights
         sidePad.on('pointermove', (pointer) => 
             {
                 const localY = pointer.y - sidePad.y;
@@ -100,6 +102,7 @@ class GameScene extends Phaser.Scene {
                 block.y = sidePad.y - 10 + (cy * (34 * 2));
             });
 
+        //DEL and ENTER key click event listeners
         sidePad.on('pointerdown', (pointer) => 
             {
                 const localY = pointer.y - sidePad.y;
@@ -107,11 +110,25 @@ class GameScene extends Phaser.Scene {
                 const selection = sideOptions[cy][0];
                 if (selection === 'DEL') {
                     userInput = userInput.slice(0, -1);
+                    userInputText.setText(userInput);
                 } else if (selection === 'ENTER') {
                     console.log('User input:', userInput);
                     userInput = '';
+                    if (userInput === solutions[0]){
+                        console.log('step 1 correct');
+                        userInputText.setText('Good!')
+                        setTimeout(() => {
+                            userInputText.setText('');
+                        }, 800);
+                    }
+                    else {
+                        console.log('incorrect')
+                        userInputText.setText('Error')
+                        setTimeout(() => {
+                            userInputText.setText('');
+                        }, 800);
+                    }
                 }
-                userInputText.setText(userInput);
             });
 
 
@@ -135,15 +152,16 @@ class GameScene extends Phaser.Scene {
         let term1 = signs[Math.floor(Math.random() * signs.length)] + ' ' + Math.floor((Math.random()+1) * 30);
         let term2 = Math.floor((Math.random()+1) * 30);
 
-        if (chosenSign === '+') {
-            solutions.push('-' + term1);
+        // *slice from index 2 because I intentionally put a space after sign for plus and minus
+        if (term1[0] === '+') {
+            solutions.push('-' + term1.slice(2));
             solutions.push('/' + coefficient);
         }
-        else if (chosenSign === '-') {
-            solutions.push('+' + term1);
+        else if (term1[0] === '-') {
+            solutions.push('+' + term1.slice(2));
             solutions.push('/' + coefficient);
         }
-
+        console.log(solutions)
 
         return `${coefficient}${chosenVariable} ${term1} = ${term2}`;
     };
