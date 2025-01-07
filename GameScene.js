@@ -12,72 +12,54 @@ class GameScene extends Phaser.Scene {
     
     preload()
     {
-        //this.load.bitmapFont('VCR', 'assets/VCR_osd.png', 'assets/VCR_osd.xml');
     }
     
 
     create() 
     {
-        /*
         //Loads math problem as text on screen
-        let currentText = this.createProblem();
-        this.add.text(800, 200, currentText, { fill: '#FFFFFF', font: '80px Helvetica' }).setOrigin(0.5);
+        let currentAnswer;
+        const currentProblem = this.createProblem();
+        const currentProblemText = this.add.bitmapText(this.cameras.main.width / 2, this.cameras.main.height / 4, 'VCR_osd_mono', currentProblem, 50).setOrigin(0.5);
 
-        //Creates 4x3 grid input buttons
-        for(let row = 0; row < 4; row++){
-            for(let col = 0; col < 3; col++){
-               this.createNumPad(900, 400, row, col);
-            }
-        };
-
-        this.add.text(800, 250, userAnswer);
-        let userAnswer;
-
-        //Response to each numPad button press | WIP MAKE CASES FOR WHEN . 0 / ARE PRESSED
-        for(let idx = 0; idx < numPadGrid.length; idx++) {
-            if(idx < 9) {
-                //numPadGrid[idx].on('pointerdown', () => {this.add.text(800, 300, `Pressed ${idx + 1}`)});
-                numPadGrid[idx].on('pointerdown', () => {
-                    for(let digits = 0; digits < 2; digits ++)
-                        {this.add.text(800 + (digits * 20), 300, idx)}
-                    }
-                );
-            }
-            else if (idx === 9) {
-                //numPadGrid[idx].on('pointerdown', () => {this.add.text(800, 300, `Pressed .`)});
-                numPadGrid[idx].on('pointerdown', () => {this.add.text(800, 300, `.`)});
-            }
-        };
-
-        for(let row = 0; row < 2; row++){
-            for(let col = 0; col < 2; col++){
-               this.createOperatorPad(600, 400, row, col);
-            }
-        };
-        */
-       const numbers = [
+        this.add.text(100, 100, '÷ ×', { fontSize: '50px'})
+        //Creates the number pad
+        const numbers =
+        [
         [1, 2, 3],
         [4, 5, 6],
         [7, 8, 9],
         ['.', 0, '/']
-       ];
+        ];
+
+        //Creates the side pad for DEL and ENTER keys
+        const sideOptions =
+        [
+        ['DEL'],
+        ['ENTER']
+        ];
 
        const cursor = { x: 0, y: 0 };
        let userInput = '';
        
-       const numberGrid = this.add.bitmapText(500, 300, 'VCR_osd_mono','123\n456\n789\n.0/', 50).setLetterSpacing(32);
-       numberGrid.setTint(0x39e75f);
-       numberGrid.setInteractive();
-        
+       //Displays the number pad as a bitmapText object with each row separated by a newline
+       const numPad = this.add.bitmapText(800, 400, 'VCR_osd_mono','123\n456\n789\n.0/', 50).setLetterSpacing(32);
+       numPad.setTint(0x39e75f);
+       numPad.setInteractive();
+
+       //Block for highlighting hovered keys
        const block = this.add.graphics();
        block.lineStyle(2, 0xFFFFFF, 1); // Line width, color, and alpha
        block.strokeRect(block.x, block.y, 50, 50);
        
+       //Displays user selected numbers on screen
+       const userInputText = this.add.bitmapText(600, currentProblemText.y + 100, 'VCR_osd_mono', userInput, 50).setLetterSpacing(0);
        
-        numberGrid.on('pointermove', (pointer, x, y) => 
+       //Event listeners to highlight hovered keys 
+       numPad.on('pointermove', (pointer) => 
         {
-            const localX = pointer.x - numberGrid.x;
-            const localY = pointer.y - numberGrid.y;
+            const localX = pointer.x - numPad.x;
+            const localY = pointer.y - numPad.y;
             
             const cx = Phaser.Math.Snap.Floor(localX, 52, 0, true);
             const cy = Phaser.Math.Snap.Floor(localY, 52, 0, true);
@@ -85,14 +67,52 @@ class GameScene extends Phaser.Scene {
 
             cursor.x = cx;
             cursor.y = cy;
-            block.x = numberGrid.x - 10 + (cx * 52);
-            block.y = numberGrid.y - 2 + (cy * 52);
+            block.x = numPad.x - 10 + (cx * 52);
+            block.y = numPad.y - 2 + (cy * 52);
 
-        }, this);
+        });
 
+        //Event listener to click and select numbers, then update displayed userInput
+        numPad.on('pointerdown', (pointer, x, y) =>
+        {
+            const localX = pointer.x - numPad.x;
+            const localY = pointer.y - numPad.y;
+            
+            const cx = Phaser.Math.Snap.Floor(localX, 52, 0, true);
+            const cy = Phaser.Math.Snap.Floor(localY, 52, 0, true);
+            const selectedNums = numbers[cy][cx];
+            if (userInput.length < 5) {
+                userInput += selectedNums;
+                userInputText.setText(userInput);
+            }
+        });
 
+        //Displays the DEL and ENTER keys on right side of numPad
+        const sidePad = this.add.bitmapText(numPad.x + 150 + 20, numPad.y + 8, 'VCR_osd_mono', 'DEL\n\nENTER', 32).setLetterSpacing(0);
+        sidePad.setInteractive();
 
+        sidePad.on('pointermove', (pointer) => 
+            {
+                const localY = pointer.y - sidePad.y;
+                const cy = Phaser.Math.Snap.Floor(localY, 50, 0, true);
+                cursor.y = cy;
+                block.x = sidePad.x - 10;
+                block.y = sidePad.y - 10 + (cy * (34 * 2));
+            });
 
+        sidePad.on('pointerdown', (pointer) => 
+            {
+                const localY = pointer.y - sidePad.y;
+                const cy = Phaser.Math.Snap.Floor(localY, 50, 0, true);
+                const selection = sideOptions[cy][0];
+                if (selection === 'DEL') {
+                    userInput = userInput.slice(0, -1);
+                } else if (selection === 'ENTER') {
+                    console.log('User input:', userInput);
+                    userInput = '';
+                }
+                userInputText.setText(userInput);
+            });
 
 
     }
@@ -102,18 +122,17 @@ class GameScene extends Phaser.Scene {
     
     }
 
-
-    /*
+    //Helper function to random generate math equation problem
     createProblem() {
         let coefficient = Math.floor((Math.random()+1) * 10);
         
         let variable = ['a', 'b', 'c', 'd', 'x', 'y', 'z'];
         let chosenVariable = variable[Math.floor(Math.random() * variable.length)];
 
-        let signs = ['+', '-'];
+        const signs = ['+', '-'];
         let chosenSign = signs[Math.floor(Math.random() * signs.length)];
 
-        let term1 = Math.floor((Math.random()+1) * 30);
+        let term1 = signs[Math.floor(Math.random() * signs.length)] + ' ' + Math.floor((Math.random()+1) * 30);
         let term2 = Math.floor((Math.random()+1) * 30);
 
         if (chosenSign === '+') {
@@ -126,10 +145,11 @@ class GameScene extends Phaser.Scene {
         }
 
 
-        return `${coefficient}${chosenVariable} ${chosenSign} ${term1} = ${term2}`;
+        return `${coefficient}${chosenVariable} ${term1} = ${term2}`;
     };
 
     //Helper function that creates the input button grid
+    //DEPRECATED FUNCTIONS ****************************************************
     createNumPad(x, y, row, col) 
     {
         const numPadStyle = {
@@ -187,7 +207,7 @@ class GameScene extends Phaser.Scene {
         operatorPad.on('pointerout', () => {operatorPad.setBackgroundColor('#FFFFFF');});
         operatorPadGrid.push(operatorPad);
     }
-    */
+    //END OF DEPRECATED FUNCTIONS **********************************************
 
 
 
