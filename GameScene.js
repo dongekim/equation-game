@@ -39,6 +39,12 @@ class GameScene extends Phaser.Scene {
         ['ENTER']
         ];
 
+        const operators = 
+        [
+            ['+', '-'],
+            ['x', '/']
+        ]
+
        const cursor = { x: 0, y: 0 };
        let userInput = '';
        const errorMsg = 'Incorrect';
@@ -54,7 +60,9 @@ class GameScene extends Phaser.Scene {
        block.strokeRect(block.x, block.y, 50, 50);
        
        //Displays user selected numbers on screen
-       let userInputText = this.add.bitmapText(600, currentProblemText.y + 100, 'VCR_osd_mono', '', 50).setLetterSpacing(0);
+       const userInputText = this.add.bitmapText(600, currentProblemText.y + 100, 'VCR_osd_mono', '', 50).setLetterSpacing(0);
+       const userOperatorText = this.add.bitmapText(userInputText.x - 50, userInputText.y, 'VCR_osd_mono', '', 50).setLetterSpacing(0);
+
        
        //Event listeners to highlight hovered keys 
        numPad.on('pointermove', (pointer) => 
@@ -112,24 +120,63 @@ class GameScene extends Phaser.Scene {
                     userInput = userInput.slice(0, -1);
                     userInputText.setText(userInput);
                 } else if (selection === 'ENTER') {
+                    let userAnswer = `${userOperatorText.text}${userInputText.text}`
                     console.log('User input:', userInput);
+                    console.log('User answer:', userAnswer);
                     userInput = '';
-                    if (userInput === solutions[0]){
+                    if (userAnswer === solutions[0]){
+                        solutions.shift();
                         console.log('step 1 correct');
-                        userInputText.setText('Good!')
+                        userInputText.setText('Good!');
+                        userOperatorText.setText('');
                         setTimeout(() => {
                             userInputText.setText('');
-                        }, 800);
+                        }, 1000);
                     }
                     else {
-                        console.log('incorrect')
-                        userInputText.setText('Error')
+                        console.log('incorrect');
+                        userInputText.setText('Error');
+                        userOperatorText.setText('');
                         setTimeout(() => {
                             userInputText.setText('');
-                        }, 800);
+                        }, 1000);
                     }
                 }
             });
+
+        //Displays operator keys as 2x2 grid
+        const operatorPad = this.add.bitmapText(600, 400, 'VCR_osd_mono','+-\nx/', 50).setLetterSpacing(32);
+        operatorPad.setTint(0xec885e);
+        operatorPad.setInteractive();
+
+        //Hover highlight for operator keys
+        operatorPad.on('pointermove', (pointer) => 
+            {
+                const localX = pointer.x - operatorPad.x;
+                const localY = pointer.y - operatorPad.y;
+                
+                const cx = Phaser.Math.Snap.Floor(localX, 52, 0, true);
+                const cy = Phaser.Math.Snap.Floor(localY, 52, 0, true);
+    
+                cursor.x = cx;
+                cursor.y = cy;
+                block.x = operatorPad.x - 10 + (cx * 52);
+                block.y = operatorPad.y - 2 + (cy * 52);
+    
+            });
+        
+            operatorPad.on('pointerdown', (pointer, x, y) =>
+            {
+                const localX = pointer.x - operatorPad.x;
+                const localY = pointer.y - operatorPad.y;
+                
+                const cx = Phaser.Math.Snap.Floor(localX, 52, 0, true);
+                const cy = Phaser.Math.Snap.Floor(localY, 52, 0, true);
+                const selectedOperator = operators[cy][cx];
+                userOperatorText.setText(selectedOperator);
+            });
+
+
 
 
     }
