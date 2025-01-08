@@ -3,6 +3,7 @@ import { Preloader } from "/Preloader.js";
 let numPadGrid = [];
 let operatorPadGrid = [];
 const solutions = [];
+let userProgress = 0;
 
 class GameScene extends Phaser.Scene {
     constructor() {
@@ -17,9 +18,10 @@ class GameScene extends Phaser.Scene {
 
     create() 
     {
+        console.log(userProgress)
         //Loads math problem as text on screen
         let currentAnswer;
-        const currentProblem = this.createProblem();
+        let currentProblem = this.createProblem();
         const currentProblemText = this.add.bitmapText(this.cameras.main.width / 2, this.cameras.main.height / 4, 'VCR_osd_mono', currentProblem, 50).setOrigin(0.5);
 
         this.add.text(100, 100, '÷ ×', { fontSize: '50px'})
@@ -124,24 +126,51 @@ class GameScene extends Phaser.Scene {
                     console.log('User input:', userInput);
                     console.log('User answer:', userAnswer);
                     userInput = '';
-                    if (userAnswer === solutions[0]){
-                        solutions.shift();
-                        console.log('step 1 correct');
-                        userInputText.setText('Good!');
-                        userOperatorText.setText('');
-                        setTimeout(() => {
-                            userInputText.setText('');
-                        }, 1000);
+                    if (userProgress === 0) {
+                        if (userAnswer === solutions[0]){
+                            console.log('step 1 correct');
+                            userInputText.setText('Good!');
+                            userOperatorText.setText('');
+                            setTimeout(() => {
+                                userInputText.setText('');
+                            }, 1000);
+                            currentProblemText.setText(this.solveProblem(currentProblem, userProgress));
+                            userProgress ++;
+                            console.log(`userProgress after step1: ${userProgress}`);
+                            solutions.shift();
+                            }
+                        else {
+                            console.log('incorrect');
+                            userInputText.setText('Error');
+                            userOperatorText.setText('');
+                            setTimeout(() => {
+                                userInputText.setText('');
+                            }, 1000);
+                            }
                     }
-                    else {
-                        console.log('incorrect');
-                        userInputText.setText('Error');
-                        userOperatorText.setText('');
-                        setTimeout(() => {
-                            userInputText.setText('');
-                        }, 1000);
+                    else if (userProgress === 1) {
+                        if (userAnswer === solutions[0]){
+                            console.log('step 2 correct');
+                            userInputText.setText('Good!');
+                            userOperatorText.setText('');
+                            setTimeout(() => {
+                                userInputText.setText('');
+                            }, 1000);
+                            currentProblemText.setText(this.solveProblem(currentProblem, userProgress));
+                            userProgress ++;
+                            solutions.shift();
+                            }
+                            
+                        else {
+                            console.log('incorrect');
+                            userInputText.setText('Error');
+                            userOperatorText.setText('');
+                            setTimeout(() => {
+                                userInputText.setText('');
+                            }, 1000);
+                            }
                     }
-                }
+            }
             });
 
         //Displays operator keys as 2x2 grid
@@ -212,6 +241,45 @@ class GameScene extends Phaser.Scene {
 
         return `${coefficient}${chosenVariable} ${term1} = ${term2}`;
     };
+
+    solveProblem(problem, userProgress) {
+        let terms = problem.split(' ');
+        console.log(terms);
+        if (userProgress === 0) {
+            let term1Value = parseInt(terms[2], 10); // Convert to number after removing the sign
+            let lastValue = parseInt(terms[terms.length - 1], 10); // Convert to number
+            let result;
+
+            if (terms[1][0] === '+') {
+                console.log('term starts with +');
+                result = lastValue - term1Value;
+            }
+            else if (terms[1][0] === '-') {
+                console.log('term starts with -');
+                result = lastValue + term1Value;
+            }
+            console.log(result);
+            console.log(solutions);
+            terms.pop();
+            terms.push(result);
+            return `${terms[0]} = ${result}`;
+        }
+        else if (userProgress === 1) {
+            let term1Value = parseInt(terms[2], 10); // Convert to number after removing the sign
+            let lastValue = parseInt(terms[terms.length - 1], 10); // Convert to number
+            let result;
+            console.log(`Array from Progress after 1 : ${terms}`)
+            console.log(solutions)
+            result = lastValue / solutions[0].slice(1);
+            let variable = terms[0].slice(0, -1);
+            return `${variable} = ${result}`;
+        }
+        else {
+            console.log('Error: function solveProblem cannot solve this type of equation');
+            console.log(userProgress)
+            return 'Error, cannot solve this type of equation';
+        }
+    }
 
     //Helper function that creates the input button grid
     //DEPRECATED FUNCTIONS ****************************************************
