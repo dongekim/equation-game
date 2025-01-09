@@ -4,10 +4,12 @@ let numPadGrid = [];
 let operatorPadGrid = [];
 const solutions = [];
 let userProgress = 0;
+let result = 0;
 
 class GameScene extends Phaser.Scene {
     constructor() {
-        super({ key: 'GameScene' })
+        super({ key: 'GameScene' });
+        this.problem = {};
     }
 
     
@@ -20,11 +22,11 @@ class GameScene extends Phaser.Scene {
     {
         console.log(userProgress)
         //Loads math problem as text on screen
-        let currentAnswer;
-        let currentProblem = this.createProblem();
-        const currentProblemText = this.add.bitmapText(this.cameras.main.width / 2, this.cameras.main.height / 4, 'VCR_osd_mono', currentProblem, 50).setOrigin(0.5);
+        this.problem = this.createProblem(); // Assign the returned problem object to this.problem
+        console.log(this.problem);
+        const currentProblemText = this.add.bitmapText(this.cameras.main.width / 2, this.cameras.main.height / 4, 'VCR_osd_mono', this.problem.text, 50).setOrigin(0.5);
 
-        this.add.text(100, 100, '÷ ×', { fontSize: '50px'})
+        //this.add.text(100, 100, '÷ ×', { fontSize: '50px'})
         //Creates the number pad
         const numbers =
         [
@@ -126,6 +128,7 @@ class GameScene extends Phaser.Scene {
                     console.log('User input:', userInput);
                     console.log('User answer:', userAnswer);
                     userInput = '';
+
                     if (userProgress === 0) {
                         if (userAnswer === solutions[0]){
                             console.log('step 1 correct');
@@ -134,7 +137,7 @@ class GameScene extends Phaser.Scene {
                             setTimeout(() => {
                                 userInputText.setText('');
                             }, 1000);
-                            currentProblemText.setText(this.solveProblem(currentProblem, userProgress));
+                            currentProblemText.setText(this.solveProblem(userProgress));
                             userProgress ++;
                             console.log(`userProgress after step1: ${userProgress}`);
                             solutions.shift();
@@ -156,7 +159,7 @@ class GameScene extends Phaser.Scene {
                             setTimeout(() => {
                                 userInputText.setText('');
                             }, 1000);
-                            currentProblemText.setText(this.solveProblem(currentProblem, userProgress));
+                            currentProblemText.setText(this.solveProblem(userProgress));
                             userProgress ++;
                             solutions.shift();
                             }
@@ -218,61 +221,56 @@ class GameScene extends Phaser.Scene {
     //Helper function to random generate math equation problem
     createProblem() {
         let coefficient = Math.floor((Math.random()+1) * 10);
-        
         let variable = ['a', 'b', 'c', 'd', 'x', 'y', 'z'];
         let chosenVariable = variable[Math.floor(Math.random() * variable.length)];
-
         const signs = ['+', '-'];
         let chosenSign = signs[Math.floor(Math.random() * signs.length)];
+        let term1 = Math.floor((Math.random()+1) * 30);
+        let lastValue = Math.floor((Math.random()+1) * 30);
 
-        let term1 = signs[Math.floor(Math.random() * signs.length)] + ' ' + Math.floor((Math.random()+1) * 30);
-        let term2 = Math.floor((Math.random()+1) * 30);
+        let problem = {};
+
+        problem.variable = chosenVariable;
+        problem.coefficient = coefficient;
+        problem.term1 = {
+            value: term1,
+            sign: chosenSign
+        };
+        problem.lastValue = lastValue;
+        problem.text = `${problem.coefficient}${problem.variable} ${problem.term1.sign} ${problem.term1.value} = ${problem.lastValue}`;
+        console.log(problem);
 
         // *slice from index 2 because I intentionally put a space after sign for plus and minus
-        if (term1[0] === '+') {
-            solutions.push('-' + term1.slice(2));
+        if (problem.term1.sign === '+') {
+            solutions.push('-' + term1);
             solutions.push('/' + coefficient);
         }
-        else if (term1[0] === '-') {
-            solutions.push('+' + term1.slice(2));
+        else if (problem.term1.sign === '-') {
+            solutions.push('+' + term1);
             solutions.push('/' + coefficient);
         }
-        console.log(solutions)
-
-        return `${coefficient}${chosenVariable} ${term1} = ${term2}`;
+        
+        return problem;
     };
 
-    solveProblem(problem, userProgress) {
-        let terms = problem.split(' ');
-        console.log(terms);
+    solveProblem(userProgress) {
         if (userProgress === 0) {
-            let term1Value = parseInt(terms[2], 10); // Convert to number after removing the sign
-            let lastValue = parseInt(terms[terms.length - 1], 10); // Convert to number
-            let result;
-
-            if (terms[1][0] === '+') {
-                console.log('term starts with +');
-                result = lastValue - term1Value;
+            if (this.problem.term1.sign === '+') {
+                result = this.problem.lastValue - this.problem.term1.value;
             }
-            else if (terms[1][0] === '-') {
-                console.log('term starts with -');
-                result = lastValue + term1Value;
+            else if (this.problem.term1.sign === '-') {
+                result = this.problem.lastValue + this.problem.term1.value;
             }
             console.log(result);
             console.log(solutions);
-            terms.pop();
-            terms.push(result);
-            return `${terms[0]} = ${result}`;
+            return `${this.problem.coefficient}${this.problem.variable} = ${result}`;
         }
         else if (userProgress === 1) {
-            let term1Value = parseInt(terms[2], 10); // Convert to number after removing the sign
-            let lastValue = parseInt(terms[terms.length - 1], 10); // Convert to number
-            let result;
-            console.log(`Array from Progress after 1 : ${terms}`)
-            console.log(solutions)
-            result = lastValue / solutions[0].slice(1);
-            let variable = terms[0].slice(0, -1);
-            return `${variable} = ${result}`;
+            result /= this.problem.coefficient;
+            // Round the result to 2 decimal places
+            result = parseFloat(result.toFixed(2));
+            console.log(`Final Answer: ${result}`);
+            return `${this.problem.variable} = ${result}`;
         }
         else {
             console.log('Error: function solveProblem cannot solve this type of equation');
@@ -280,67 +278,6 @@ class GameScene extends Phaser.Scene {
             return 'Error, cannot solve this type of equation';
         }
     }
-
-    //Helper function that creates the input button grid
-    //DEPRECATED FUNCTIONS ****************************************************
-    createNumPad(x, y, row, col) 
-    {
-        const numPadStyle = {
-            fontFamily: 'Arial',
-            fontSize: '20px',
-            color: '#000000',
-            align: 'center',
-            backgroundColor: '#FFFFFF'
-        };
-
-        let numPad;
-
-        if (numPadGrid.length < 9) {
-            numPad = this.add.text(x + (col * 50), y + (row * 60), numPadGrid.length + 1, numPadStyle).setPadding(16).setOrigin(0.5);
-        } else if (numPadGrid.length === 9) {
-            numPad = this.add.text(x + (col * 50), y + (row * 60), '.', numPadStyle).setPadding(16).setOrigin(0.5);
-        } else if (numPadGrid.length === 10) {
-            numPad = this.add.text(x + (col * 50), y + (row * 60), '0', numPadStyle).setPadding(16).setOrigin(0.5);
-        } else if (numPadGrid.length === 11) {
-            numPad = this.add.text(x + (col * 50), y + (row * 60), '/', numPadStyle).setPadding(16).setOrigin(0.5);
-        } else {
-            console.log('Error: numPadGrid length is greater than 12');
-        }
-        numPad.setInteractive();
-        numPad.on('pointerover', () => {numPad.setBackgroundColor('#FF0000');});
-        numPad.on('pointerout', () => {numPad.setBackgroundColor('#FFFFFF');});
-        numPadGrid.push(numPad);
-    }
-
-    createOperatorPad(x, y, row, col) 
-    {
-        const numPadStyle = {
-            fontFamily: 'Arial',
-            fontSize: '20px',
-            color: '#000000',
-            align: 'center',
-            backgroundColor: '#FFFFFF'
-        };
-
-        let operatorPad;
-
-        if (operatorPadGrid.length === 0) {
-            operatorPad = this.add.text(x + (col * 50), y + (row * 60), '+', numPadStyle).setPadding(16).setOrigin(0.5);
-        } else if (operatorPadGrid.length === 1) {
-            operatorPad = this.add.text(x + (col * 50), y + (row * 60), '-', numPadStyle).setPadding(16).setOrigin(0.5);
-        } else if (operatorPadGrid.length === 2) {
-            operatorPad = this.add.text(x + (col * 50), y + (row * 60), 'x', numPadStyle).setPadding(16).setOrigin(0.5);
-        } else if (operatorPadGrid.length === 3) {
-            operatorPad = this.add.text(x + (col * 50), y + (row * 60), '/', numPadStyle).setPadding(16).setOrigin(0.5);
-        } else {
-            console.log('Error: operatorPadGrid length is greater than 4');
-        }
-        operatorPad.setInteractive();
-        operatorPad.on('pointerover', () => {operatorPad.setBackgroundColor('#FF0000');});
-        operatorPad.on('pointerout', () => {operatorPad.setBackgroundColor('#FFFFFF');});
-        operatorPadGrid.push(operatorPad);
-    }
-    //END OF DEPRECATED FUNCTIONS **********************************************
 
 
 
