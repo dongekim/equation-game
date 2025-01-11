@@ -1,4 +1,4 @@
-export class Preloader extends Phaser.Scene
+class Preloader extends Phaser.Scene
 {
     constructor()
     {
@@ -13,6 +13,7 @@ export class Preloader extends Phaser.Scene
         //this.load.setBaseURL();
         //this.load.setPath();
         //this.load.audio();
+        this.load.image('background', 'assets/background2.jpg');
         this.load.bitmapFont('VCR_osd_mono', 'assets/VCR_osd_mono.png', 'assets/VCR_osd_mono.xml');
         
     }
@@ -24,3 +25,5 @@ export class Preloader extends Phaser.Scene
 
     
 }
+
+export default Preloader

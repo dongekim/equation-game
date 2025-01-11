@@ -1,4 +1,4 @@
-import { Preloader } from "/Preloader.js";
+import Preloader from "/Preloader.js";
 
 let solutions = [];
 let userProgress = 0;
@@ -13,11 +13,20 @@ class GameScene extends Phaser.Scene {
     
     preload()
     {
+   
     }
     
 
     create() 
     {
+        const background = this.add.image(this.cameras.main.width / 2, this.cameras.main.height / 2, 'background').setOrigin(0.5, 0.5);
+        const scaleX = this.cameras.main.width / background.width;
+        //const scaleY = background.height / this.cameras.main.height;
+        //const scale = Math.max(scaleX, scaleY);
+
+        // Apply scale
+        background.setScale(scaleX).setScrollFactor(0);
+        
         console.log(userProgress)
         //Loads math problem as text on screen
         this.problem = this.createProblem(); // Assign the returned problem object to this.problem
@@ -305,12 +314,5 @@ class GameScene extends Phaser.Scene {
 
 }
 
-const config = {
-    type: Phaser.AUTO,
-    width: 1280,
-    height: 800,
-    backgroundColor: '#240045',
-    scene: [Preloader, GameScene]
-  };
-  
-new Phaser.Game(config);
+
+export default GameScene;
