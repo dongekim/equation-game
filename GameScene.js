@@ -1,8 +1,6 @@
 import { Preloader } from "/Preloader.js";
 
-let numPadGrid = [];
-let operatorPadGrid = [];
-const solutions = [];
+let solutions = [];
 let userProgress = 0;
 let result = 0;
 
@@ -208,6 +206,24 @@ class GameScene extends Phaser.Scene {
                 userOperatorText.setText(selectedOperator);
             });
 
+            const restartButton = this.add.bitmapText(this.cameras.main.width * 0.9, this.cameras.main.height * 0.05, 'VCR_osd_mono', 'RESTART', 32).setOrigin(0.5);
+            restartButton.setInteractive();
+            restartButton.on('pointerover', () =>
+            {
+                restartButton.setTint(0x39e75f);
+            });
+            restartButton.on('pointerout', () =>
+            {
+                restartButton.setTint(0xffffff);
+            });
+            restartButton.on('pointerdown', () => 
+            {
+                this.resetGame();
+                this.scene.stop("GameScene");
+                this.scene.start("GameScene");
+            }
+            );
+
 
 
 
@@ -220,6 +236,8 @@ class GameScene extends Phaser.Scene {
 
     //Helper function to random generate math equation problem
     createProblem() {
+        let problem = {};
+
         let coefficient = Math.floor((Math.random()+1) * 10);
         let variable = ['a', 'b', 'c', 'd', 'x', 'y', 'z'];
         let chosenVariable = variable[Math.floor(Math.random() * variable.length)];
@@ -227,8 +245,6 @@ class GameScene extends Phaser.Scene {
         let chosenSign = signs[Math.floor(Math.random() * signs.length)];
         let term1 = Math.floor((Math.random()+1) * 30);
         let lastValue = Math.floor((Math.random()+1) * 30);
-
-        let problem = {};
 
         problem.variable = chosenVariable;
         problem.coefficient = coefficient;
@@ -249,7 +265,7 @@ class GameScene extends Phaser.Scene {
             solutions.push('+' + term1);
             solutions.push('/' + coefficient);
         }
-        
+        console.log(solutions);
         return problem;
     };
 
@@ -277,7 +293,13 @@ class GameScene extends Phaser.Scene {
             console.log(userProgress)
             return 'Error, cannot solve this type of equation';
         }
-    }
+    };
+
+    resetGame() {
+        solutions = [];
+        userProgress = 0;
+        result = 0;
+    };
 
 
 
