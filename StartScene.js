@@ -12,7 +12,7 @@ class StartScene extends Phaser.Scene {
 
     create()
     {
-        this.add.bitmapText(this.cameras.main.width / 2, this.cameras.main.height * 0.3, 'VCR_osd_mono', 'Equation Game', 72).setOrigin(0.5);
+        this.add.bitmapText(this.cameras.main.width / 2, this.cameras.main.height * 0.3, 'VCR_osd_mono', 'Code Breaker', 72).setOrigin(0.5);
         const startButton = this.add.bitmapText(this.cameras.main.width / 2, this.cameras.main.height * 0.7, 'VCR_osd_mono', 'One variable equations', 50).setOrigin(0.5);
         startButton.setInteractive();
         startButton.on('pointerover', () => {startButton.setTint(0x39e75f)});
