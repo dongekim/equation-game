@@ -54,7 +54,42 @@ class GameScene extends Phaser.Scene {
         [
             ['+', '-'],
             ['x', '/']
-        ]
+        ];
+
+        this.anims.create({
+            key: 'keypad_press',
+            frames: this.anims.generateFrameNumbers('keypad_bg', { start: 0, end: 1 }),
+            frameRate: 12,
+            repeat: 0,
+            yoyo: true
+        });
+
+        const buttonWidth = 64; // Width of each button
+        const buttonHeight = 64; // Height of each button
+        const startX = 800; // Starting X position
+        const startY = 400; // Starting Y position
+        const spacingX = 10; // Horizontal spacing between buttons
+        const spacingY = 10; // Vertical spacing between buttons
+        
+        for (let row = 0; row < 4; row++) {
+            for (let col = 0; col < 3; col++) {
+                const x = startX + col * (buttonWidth + spacingX);
+                const y = startY + row * (buttonHeight + spacingY);
+                const sampleButton = this.add.sprite(x, y, 'keypad_bg').setInteractive();
+                sampleButton.on('pointerdown', () => {
+                    if (sampleButton.anims.isPlaying) {
+                        sampleButton.anims.stop();
+                    }
+                    sampleButton.anims.play('keypad_press', true);
+                });
+                sampleButton.on('pointerover', () => {
+                    sampleButton.setFrame(3);
+                });
+                sampleButton.on('pointerout', () => {
+                    sampleButton.setFrame(0);
+                });
+            }
+        }
 
        const cursor = { x: 0, y: 0 };
        let userInput = '';
