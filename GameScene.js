@@ -8,6 +8,16 @@ class GameScene extends Phaser.Scene {
     constructor() {
         super({ key: 'GameScene' });
         this.problem = {};
+        this.numbers =
+        [
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+        ['.', 0, '/']
+        ];
+        this.userInput = '';    //declare userInput as a class property to be accessed by all methods
+        this.userInputText;
+        //this.userOperatorText;
     }
 
     
@@ -19,29 +29,20 @@ class GameScene extends Phaser.Scene {
 
     create() 
     {
-        const background = this.add.image(this.cameras.main.width / 2, this.cameras.main.height / 2, 'background').setOrigin(0.5, 0.5);
-        const scaleX = this.cameras.main.width / background.width;
+        // BACKGROUND IMAGE SETUP, CHANGE TO BETTER BACKGROUND LATER
+        //const background = this.add.image(this.cameras.main.width / 2, this.cameras.main.height / 2, 'background').setOrigin(0.5, 0.5);
+        //const scaleX = this.cameras.main.width / background.width;
         //const scaleY = background.height / this.cameras.main.height;
         //const scale = Math.max(scaleX, scaleY);
 
         // Apply scale
-        background.setScale(scaleX).setScrollFactor(0);
+        //background.setScale(scaleX).setScrollFactor(0);
         
         console.log(userProgress)
         //Loads math problem as text on screen
         this.problem = this.createProblem(); // Assign the returned problem object to this.problem
         console.log(this.problem);
         const currentProblemText = this.add.bitmapText(this.cameras.main.width / 2, this.cameras.main.height / 4, 'VCR_osd_mono', this.problem.text, 50).setOrigin(0.5);
-
-        //this.add.text(100, 100, '÷ ×', { fontSize: '50px'})
-        //Creates the number pad
-        const numbers =
-        [
-        [1, 2, 3],
-        [4, 5, 6],
-        [7, 8, 9],
-        ['.', 0, '/']
-        ];
 
         //Creates the side pad for DEL and ENTER keys
         const sideOptions =
@@ -56,6 +57,7 @@ class GameScene extends Phaser.Scene {
             ['x', '/']
         ];
 
+        //Keypad press animation
         this.anims.create({
             key: 'keypad_press',
             frames: this.anims.generateFrameNumbers('keypad_bg', { start: 0, end: 1 }),
@@ -64,41 +66,63 @@ class GameScene extends Phaser.Scene {
             yoyo: true
         });
 
-        const buttonWidth = 64; // Width of each button
-        const buttonHeight = 64; // Height of each button
+        //Specs for numberPad buttons
+        this.buttonWidth = 76; // Width of each button
+        this.buttonHeight = 76; // Height of each button
         const startX = 800; // Starting X position
         const startY = 400; // Starting Y position
-        const spacingX = 10; // Horizontal spacing between buttons
-        const spacingY = 10; // Vertical spacing between buttons
+        const spacingX = -4; // Horizontal spacing between buttons
+        const spacingY = -4; // Vertical spacing between buttons
+
+        this.numContainer = this.add.container(750, 400);
         
+        //Loop to create numberpad buttons with sprite image
         for (let row = 0; row < 4; row++) {
             for (let col = 0; col < 3; col++) {
-                const x = startX + col * (buttonWidth + spacingX);
-                const y = startY + row * (buttonHeight + spacingY);
-                const sampleButton = this.add.sprite(x, y, 'keypad_bg').setInteractive();
-                sampleButton.on('pointerdown', () => {
-                    if (sampleButton.anims.isPlaying) {
-                        sampleButton.anims.stop();
+                const x = col * (this.buttonWidth + spacingX);
+                const y = row * (this.buttonHeight + spacingY);
+                const buttonSprite = this.add.sprite(x, y, 'keypad_bg').setInteractive();
+                const num = this.add.bitmapText(x, y, 'VCR_osd_mono', this.numbers[row][col], 50).setOrigin(0.5).setTint(0xFFFF33).setInteractive();
+        
+                // Shared event handler function
+                const handlePointerDown = (pointer) => {
+                    if (buttonSprite.anims.isPlaying) {
+                        buttonSprite.anims.stop();
                     }
-                    sampleButton.anims.play('keypad_press', true);
-                });
-                sampleButton.on('pointerover', () => {
-                    sampleButton.setFrame(3);
-                });
-                sampleButton.on('pointerout', () => {
-                    sampleButton.setFrame(0);
-                });
+                    buttonSprite.anims.play('keypad_press', true);
+
+                    this.selectNumber(pointer);
+                    
+                    // Create a timed event to revert the size back to normal
+                    num.setFontSize(num.fontSize - 4);
+                    this.time.delayedCall(200, () => {
+                        num.setFontSize(num.fontSize + 4);
+                    });
+                };
+
+                const handleHover = () => {
+                    buttonSprite.setFrame(3);
+                };
+
+                const handleHoverOut = () => {
+                    buttonSprite.setFrame(0);
+                };
+        
+                // Add the event listener to both buttonSprite and num
+                buttonSprite.on('pointerdown', handlePointerDown);
+                num.on('pointerdown', handlePointerDown);
+        
+                buttonSprite.on('pointerover', handleHover);
+                num.on('pointerover', handleHover);
+                buttonSprite.on('pointerout', handleHoverOut);
+                num.on('pointerout', handleHoverOut);
+        
+                this.numContainer.add(buttonSprite);
+                this.numContainer.add(num);
             }
-        }
+        };
 
        const cursor = { x: 0, y: 0 };
-       let userInput = '';
-       const errorMsg = 'Incorrect';
-       
-       //Displays the number pad as a bitmapText object with each row separated by a newline
-       const numPad = this.add.bitmapText(800, 400, 'VCR_osd_mono','123\n456\n789\n.0/', 50).setLetterSpacing(32);
-       numPad.setTint(0x39e75f);
-       numPad.setInteractive();
 
        //Block for highlighting hovered keys
        const block = this.add.graphics();
@@ -106,44 +130,11 @@ class GameScene extends Phaser.Scene {
        block.strokeRect(block.x, block.y, 50, 50);
        
        //Displays user selected numbers on screen
-       const userInputText = this.add.bitmapText(600, currentProblemText.y + 100, 'VCR_osd_mono', '', 50).setLetterSpacing(0);
-       const userOperatorText = this.add.bitmapText(userInputText.x - 50, userInputText.y, 'VCR_osd_mono', '', 50).setLetterSpacing(0);
-
-       
-       //Event listeners to highlight hovered keys 
-       numPad.on('pointermove', (pointer) => 
-        {
-            const localX = pointer.x - numPad.x;
-            const localY = pointer.y - numPad.y;
-            
-            const cx = Phaser.Math.Snap.Floor(localX, 52, 0, true);
-            const cy = Phaser.Math.Snap.Floor(localY, 52, 0, true);
-            //const char = numberGrid[cy][cx];
-
-            cursor.x = cx;
-            cursor.y = cy;
-            block.x = numPad.x - 10 + (cx * 52);
-            block.y = numPad.y - 2 + (cy * 52);
-
-        });
-
-        //Event listener to click and select numbers, then update displayed userInput
-        numPad.on('pointerdown', (pointer, x, y) =>
-        {
-            const localX = pointer.x - numPad.x;
-            const localY = pointer.y - numPad.y;
-            
-            const cx = Phaser.Math.Snap.Floor(localX, 52, 0, true);
-            const cy = Phaser.Math.Snap.Floor(localY, 52, 0, true);
-            const selectedNums = numbers[cy][cx];
-            if (userInput.length < 5) {
-                userInput += selectedNums;
-                userInputText.setText(userInput);
-            }
-        });
+       this.userInputText = this.add.bitmapText(600, currentProblemText.y + 100, 'VCR_osd_mono', '', 50).setLetterSpacing(0);
+       const userOperatorText = this.add.bitmapText(this.userInputText.x - 50, this.userInputText.y, 'VCR_osd_mono', '', 50).setLetterSpacing(0);
 
         //Displays the DEL and ENTER keys on right side of numPad
-        const sidePad = this.add.bitmapText(numPad.x + 150 + 20, numPad.y + 8, 'VCR_osd_mono', 'DEL\n\nENTER', 32).setLetterSpacing(0);
+        const sidePad = this.add.bitmapText(this.numContainer.x + 150 + 20, this.numContainer.y + 8, 'VCR_osd_mono', 'DEL\n\nENTER', 32).setLetterSpacing(0);
         sidePad.setInteractive();
 
         //DEL and ENTER key hover highlights
@@ -163,21 +154,21 @@ class GameScene extends Phaser.Scene {
                 const cy = Phaser.Math.Snap.Floor(localY, 50, 0, true);
                 const selection = sideOptions[cy][0];
                 if (selection === 'DEL') {
-                    userInput = userInput.slice(0, -1);
-                    userInputText.setText(userInput);
+                    this.userInput = this.userInput.slice(0, -1);
+                    this.userInputText.setText(this.userInput);
                 } else if (selection === 'ENTER') {
-                    let userAnswer = `${userOperatorText.text}${userInputText.text}`
-                    console.log('User input:', userInput);
+                    let userAnswer = `${userOperatorText.text}${this.userInputText.text}`
+                    console.log('User input:', this.userInput);
                     console.log('User answer:', userAnswer);
-                    userInput = '';
+                    this.userInput = '';
 
                     if (userProgress === 0) {
                         if (userAnswer === solutions[0]){
                             console.log('step 1 correct');
-                            userInputText.setText('Good!');
+                            this.userInputText.setText('Good!');
                             userOperatorText.setText('');
                             setTimeout(() => {
-                                userInputText.setText('');
+                                this.userInputText.setText('');
                             }, 1000);
                             currentProblemText.setText(this.solveProblem(userProgress));
                             userProgress ++;
@@ -186,20 +177,20 @@ class GameScene extends Phaser.Scene {
                             }
                         else {
                             console.log('incorrect');
-                            userInputText.setText('Error');
+                            this.userInputText.setText('Error');
                             userOperatorText.setText('');
                             setTimeout(() => {
-                                userInputText.setText('');
+                                this.userInputText.setText('');
                             }, 1000);
                             }
                     }
                     else if (userProgress === 1) {
                         if (userAnswer === solutions[0]){
                             console.log('step 2 correct');
-                            userInputText.setText('Good!');
+                            this.userInputText.setText('Good!');
                             userOperatorText.setText('');
                             setTimeout(() => {
-                                userInputText.setText('');
+                                this.userInputText.setText('');
                             }, 1000);
                             currentProblemText.setText(this.solveProblem(userProgress));
                             userProgress ++;
@@ -208,10 +199,10 @@ class GameScene extends Phaser.Scene {
                             
                         else {
                             console.log('incorrect');
-                            userInputText.setText('Error');
+                            this.userInputText.setText('Error');
                             userOperatorText.setText('');
                             setTimeout(() => {
-                                userInputText.setText('');
+                                this.userInputText.setText('');
                             }, 1000);
                             }
                     }
@@ -223,7 +214,7 @@ class GameScene extends Phaser.Scene {
         operatorPad.setTint(0xec885e);
         operatorPad.setInteractive();
 
-        //Hover highlight for operator keys
+        //Hover highlight for operator keys DEPRECIATE AFTER UPDATING TO USING SPRITES
         operatorPad.on('pointermove', (pointer) => 
             {
                 const localX = pointer.x - operatorPad.x;
@@ -336,6 +327,27 @@ class GameScene extends Phaser.Scene {
             console.log('Error: function solveProblem cannot solve this type of equation');
             console.log(userProgress)
             return 'Error, cannot solve this type of equation';
+        }
+    };
+
+    //Method for selecting numbers from the number pad.
+    //Interprets clicked number by pointer's relative position to the numberPad
+    selectNumber(pointer) {
+        const localX = pointer.x - (this.numContainer.x - this.buttonWidth/2);
+        const localY = pointer.y - (this.numContainer.y - this.buttonHeight/2);
+        console.log(`localX = ${localX}, localY = ${localY}, ${this.buttonWidth}`);
+        
+        const cx = Phaser.Math.Snap.Floor(localX, 76, 0, true);
+        const cy = Phaser.Math.Snap.Floor(localY, 76, 0, true);
+        console.log(`cx = ${cx}, cy = ${cy}`);
+
+        if (cx >= 0 && cx < 3 && cy >= 0 && cy < 4) {
+            const selectedNum = this.numbers[cy][cx];
+            console.log(selectedNum);
+            if (this.userInput.length < 5) {
+                this.userInput += selectedNum;
+                this.userInputText.setText(this.userInput);
+            }
         }
     };
 
