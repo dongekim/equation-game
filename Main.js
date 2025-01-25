@@ -6,7 +6,7 @@ const config = {
     type: Phaser.AUTO,
     width: 1280,
     height: 720,
-    backgroundColor: '#240045',
+    backgroundColor: '#8f7bb5',
     scene: [Preloader, StartScene, GameScene]
   };
 

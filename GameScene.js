@@ -30,7 +30,7 @@ class GameScene extends Phaser.Scene {
     create() 
     {
         // BACKGROUND IMAGE SETUP, CHANGE TO BETTER BACKGROUND LATER
-        //const background = this.add.image(this.cameras.main.width / 2, this.cameras.main.height / 2, 'background').setOrigin(0.5, 0.5);
+        this.add.image(this.cameras.main.width / 2, 80 + 105, 'monitor').setOrigin(0.5, 0.5);
         //const scaleX = this.cameras.main.width / background.width;
         //const scaleY = background.height / this.cameras.main.height;
         //const scale = Math.max(scaleX, scaleY);
@@ -42,7 +42,7 @@ class GameScene extends Phaser.Scene {
         //Loads math problem as text on screen
         this.problem = this.createProblem(); // Assign the returned problem object to this.problem
         console.log(this.problem);
-        const currentProblemText = this.add.bitmapText(this.cameras.main.width / 2, this.cameras.main.height / 4, 'VCR_osd_mono', this.problem.text, 50).setOrigin(0.5);
+        const currentProblemText = this.add.bitmapText(this.cameras.main.width / 2, this.cameras.main.height / 4, 'VCR_osd_mono', this.problem.text, 50).setOrigin(0.5).setTint(0x000000);
 
         //Creates the side pad for DEL and ENTER keys
         const sideOptions =
