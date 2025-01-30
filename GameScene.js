@@ -20,9 +20,14 @@ class GameScene extends Phaser.Scene {
             ['+', '-'],
             ['x', '/']
         ];
+        this.options = [
+            ['DEL'],
+            ['ENTER']
+        ];
         this.userInput = '';    //declare userInput as a class property to be accessed by all methods
         this.userInputText;
         this.userOperatorText;
+        this.currentProblemText = null;
     }
 
     
@@ -35,29 +40,38 @@ class GameScene extends Phaser.Scene {
     create() 
     {
         // BACKGROUND IMAGE SETUP, CHANGE TO BETTER BACKGROUND LATER
-        this.add.image(this.cameras.main.width / 2, 80 + 105, 'monitor').setOrigin(0.5, 0.5);
+        const monitor = this.add.image(40, 80, 'monitor').setOrigin(0, 0);
         console.log(userProgress);
 
         //Loads math problem as text on screen
         this.problem = this.createProblem(); // Assign the returned problem object to this.problem
         console.log(this.problem);
-        const currentProblemText = this.add.bitmapText(this.cameras.main.width / 2, this.cameras.main.height / 4, 'VCR_osd_mono', this.problem.text, 50).setOrigin(0.5).setTint(0x000000);
-
-        //Creates the side pad for DEL and ENTER keys
-        const sideOptions =
-        [
-        ['DEL'],
-        ['ENTER']
-        ];
+        this.currentProblemText = this.add.bitmapText(220, 118, 'VCR_osd_mono', this.problem.text, 50).setOrigin(0).setTint(0x000000);
 
         //Keypad press animation
         this.anims.create({
-            key: 'keypad_press',
-            frames: this.anims.generateFrameNumbers('keypad_bg', { start: 0, end: 1 }),
+            key: 'keypad_blue_press',
+            frames: this.anims.generateFrameNumbers('keypad_blue', { start: 0, end: 1 }),
             frameRate: 12,
             repeat: 0,
             yoyo: true
         });
+
+        this.anims.create({
+            key: 'keypad_orange_press',
+            frames: this.anims.generateFrameNumbers('keypad_orange', { start: 0, end: 1 }),
+            frameRate: 12,
+            repeat: 0,
+            yoyo: true
+        });
+
+        this.anims.create({
+            key: 'keypad_wide_press',
+            frames: this.anims.generateFrameNumbers('keypad_wide', { start: 0, end: 1 }),
+            frameRate: 12,
+            repeat: 0,
+            yoyo: true
+        })
 
         //Specs for numberPad buttons
         this.buttonWidth = 76; // Width of each button
@@ -68,15 +82,19 @@ class GameScene extends Phaser.Scene {
         const spacingY = -4; // Vertical spacing between buttons
 
         //Creates containers for numberPad and operatorPad, also sets their positions on screen
-        this.numContainer = this.add.container(750, 400);
-        this.opContainer = this.add.container(550, 400);
+        this.numContainer = this.add.container(346, 400);
+        this.opContainer = this.add.container(142, 400);
+        this.optionContainer = this.add.container(610, 400);
         
+        this.add.rectangle(this.cameras.main.width - 40, 80, 384, 125, 0xC0C0C0, 0.4).setOrigin(1, 0);
+        this.add.rectangle(this.cameras.main.width - 40, 225, 384, 415, 0xC0C0C0, 0.4).setOrigin(1, 0);
+
         //Loop to create numberpad buttons with sprite image
         for (let row = 0; row < 4; row++) {
             for (let col = 0; col < 3; col++) {
                 const x = col * (this.buttonWidth + spacingX);
                 const y = row * (this.buttonHeight + spacingY);
-                const buttonSprite = this.add.sprite(x, y, 'keypad_bg').setInteractive();
+                const buttonSprite = this.add.sprite(x, y, 'keypad_blue').setInteractive();
                 const num = this.add.bitmapText(x, y, 'VCR_osd_mono', this.numbers[row][col], 50).setOrigin(0.5).setTint(0xFFFF33).setInteractive();
         
                 // Shared event handler function
@@ -84,7 +102,7 @@ class GameScene extends Phaser.Scene {
                     if (buttonSprite.anims.isPlaying) {
                         buttonSprite.anims.stop();
                     }
-                    buttonSprite.anims.play('keypad_press', true);
+                    buttonSprite.anims.play('keypad_blue_press', true);
 
                     this.selectNumber(pointer);
                     
@@ -122,15 +140,15 @@ class GameScene extends Phaser.Scene {
             for (let col = 0; col <2; col++){
                 const x = col * (this.buttonWidth + spacingX);
                 const y = row * (this.buttonHeight + spacingY);
-                const buttonSprite = this.add.sprite(x, y, 'keypad_bg').setInteractive();
-                const operator = this.add.bitmapText(x, y, 'VCR_osd_mono', this.operators[row][col], 50).setOrigin(0.5).setTint(0xec885e).setInteractive();
+                const buttonSprite = this.add.sprite(x, y, 'keypad_orange').setInteractive();
+                const operator = this.add.bitmapText(x, y, 'VCR_osd_mono', this.operators[row][col], 50).setOrigin(0.5).setTint(0xFFFFFF).setInteractive();
 
                 // Shared event handler function
                 const handlePointerDown = (pointer) => {
                     if (buttonSprite.anims.isPlaying) {
                         buttonSprite.anims.stop();
                     }
-                    buttonSprite.anims.play('keypad_press', true);
+                    buttonSprite.anims.play('keypad_orange_press', true);
 
                     this.selectOperator(pointer);
                     
@@ -161,95 +179,56 @@ class GameScene extends Phaser.Scene {
                 this.opContainer.add(buttonSprite);
                 this.opContainer.add(operator);
             }
-        }
-
-       const cursor = { x: 0, y: 0 };
-
-       //Block for highlighting hovered keys
-       const block = this.add.graphics();
-       block.lineStyle(2, 0xFFFFFF, 1); // Line width, color, and alpha
-       block.strokeRect(block.x, block.y, 50, 50);
+        };
        
        //Displays user selected numbers on screen
-       this.userInputText = this.add.bitmapText(600, currentProblemText.y + 100, 'VCR_osd_mono', '', 50).setLetterSpacing(0);
-       this.userOperatorText = this.add.bitmapText(this.userInputText.x - 50, this.userInputText.y, 'VCR_osd_mono', '', 50).setLetterSpacing(0);
+       this.userOperatorText = this.add.bitmapText(258, 80 + monitor.height + 48, 'VCR_osd_mono', '', 50).setLetterSpacing(0);
+       this.userInputText = this.add.bitmapText(this.userOperatorText.x + this.userOperatorText.width + 38, 80 + monitor.height + 48, 'VCR_osd_mono', '', 50).setLetterSpacing(0);
 
-        //Displays the DEL and ENTER keys on right side of numPad
-        const sidePad = this.add.bitmapText(this.numContainer.x + 150 + 100, this.numContainer.y - 20, 'VCR_osd_mono', 'DEL\n\nENTER', 32).setLetterSpacing(0);
-        sidePad.setInteractive();
+        //Loop to create DEL and ENTER options
+        for (let row = 0; row < 2; row++) {
+            const y = row * (this.buttonHeight + 4);
+            const buttonSprite = this.add.sprite(0, y, 'keypad_wide').setInteractive();
+            const option = this.add.bitmapText(0, y, 'VCR_osd_mono', this.options[row], 32).setOrigin(0.5).setTint(0xFFFFFF).setInteractive();
+            
+            const handlePointerDown = (pointer) => {
+                if (buttonSprite.anims.isPlaying) {
+                    buttonSprite.anims.stop();
+                }
+                buttonSprite.anims.play('keypad_wide_press', true);
 
-        //DEL and ENTER key hover highlights
-        sidePad.on('pointermove', (pointer) => 
-            {
-                const localY = pointer.y - sidePad.y;
-                const cy = Phaser.Math.Snap.Floor(localY, 50, 0, true);
-                cursor.y = cy;
-                block.x = sidePad.x - 10;
-                block.y = sidePad.y - 10 + (cy * (34 * 2));
-            });
+                this.selectOption(pointer);
 
-        //DEL and ENTER key click event listeners
-        sidePad.on('pointerdown', (pointer) => 
-            {
-                const localY = pointer.y - sidePad.y;
-                const cy = Phaser.Math.Snap.Floor(localY, 50, 0, true);
-                const selection = sideOptions[cy][0];
-                if (selection === 'DEL') {
-                    this.userInput = this.userInput.slice(0, -1);
-                    this.userInputText.setText(this.userInput);
-                } else if (selection === 'ENTER') {
-                    let userAnswer = `${this.userOperatorText.text}${this.userInputText.text}`
-                    console.log('User input:', this.userInput);
-                    console.log('User answer:', userAnswer);
-                    this.userInput = '';
+                option.setFontSize(option.fontSize - 4);
+                this.time.delayedCall(200, () => {
+                    option.setFontSize(option.fontSize + 4);
+                });
+            };
 
-                    if (userProgress === 0) {
-                        if (userAnswer === solutions[0]){
-                            console.log('step 1 correct');
-                            this.userInputText.setText('Good!');
-                            this.userOperatorText.setText('');
-                            setTimeout(() => {
-                                this.userInputText.setText('');
-                            }, 1000);
-                            currentProblemText.setText(this.solveProblem(userProgress));
-                            userProgress ++;
-                            console.log(`userProgress after step1: ${userProgress}`);
-                            solutions.shift();
-                            }
-                        else {
-                            console.log('incorrect');
-                            this.userInputText.setText('Error');
-                            this.userOperatorText.setText('');
-                            setTimeout(() => {
-                                this.userInputText.setText('');
-                            }, 1000);
-                            }
-                    }
-                    else if (userProgress === 1) {
-                        if (userAnswer === solutions[0]){
-                            console.log('step 2 correct');
-                            this.userInputText.setText('Good!');
-                            this.userOperatorText.setText('');
-                            setTimeout(() => {
-                                this.userInputText.setText('');
-                            }, 1000);
-                            currentProblemText.setText(this.solveProblem(userProgress));
-                            userProgress ++;
-                            solutions.shift();
-                            }
-                            
-                        else {
-                            console.log('incorrect');
-                            this.userInputText.setText('Error');
-                            this.userOperatorText.setText('');
-                            setTimeout(() => {
-                                this.userInputText.setText('');
-                            }, 1000);
-                            }
-                    }
-            }
-            });
+            const handleHover = () => {
+                buttonSprite.setFrame(3);
+            };
 
+            const handleHoverOut = () => {
+                buttonSprite.setFrame(0);
+            };
+    
+            // Add the event listener to both buttonSprite and option
+            buttonSprite.on('pointerdown', handlePointerDown);
+            option.on('pointerdown', handlePointerDown);
+    
+            buttonSprite.on('pointerover', handleHover);
+            option.on('pointerover', handleHover);
+            buttonSprite.on('pointerout', handleHoverOut);
+            option.on('pointerout', handleHoverOut);
+    
+            this.optionContainer.add(buttonSprite);
+            this.optionContainer.add(option);
+
+
+        }
+
+        //Creates a restart button on top right of screen
         const restartButton = this.add.bitmapText(this.cameras.main.width * 0.9, this.cameras.main.height * 0.05, 'VCR_osd_mono', 'RESTART', 32).setOrigin(0.5);
         restartButton.setInteractive();
         restartButton.on('pointerover', () =>
@@ -372,6 +351,73 @@ class GameScene extends Phaser.Scene {
             const selectedOp = this.operators[cy][cx];
             this.userOperatorText.setText(selectedOp);
         }
+    };
+
+    //Method for selecting DEL and ENTER options
+    selectOption(pointer) {
+        console.log(`Current userProgress: ${userProgress}`);
+        const localY = pointer.y - (this.optionContainer.y - this.buttonHeight/2);
+        const cy = Phaser.Math.Snap.Floor(localY, 80, 0, true);
+        const selection = this.options[cy][0];
+        console.log(`localY = ${localY}, cy = ${cy}, selection = ${selection}`);
+        if (selection === 'DEL') {
+            console.log('Pressed DEL');
+            this.userInput = this.userInput.slice(0, -1);
+            this.userInputText.setText(this.userInput);
+        }
+        
+        else if (selection === 'ENTER') {
+            console.log('Pressed ENTER');
+            let userAnswer = `${this.userOperatorText.text}${this.userInputText.text}`
+            console.log('User input:', this.userInput);
+            console.log('User answer:', userAnswer);
+            this.userInput = '';
+
+            if (userProgress === 0) {
+                if (userAnswer === solutions[0]){
+                    console.log('step 1 correct');
+                    this.userInputText.setText('Good!');
+                    this.userOperatorText.setText('');
+                    setTimeout(() => {
+                        this.userInputText.setText('');
+                    }, 1000);
+                    this.currentProblemText.setText(this.solveProblem(userProgress));
+                    userProgress ++;
+                    console.log(`userProgress after step1: ${userProgress}`);
+                    solutions.shift();
+                    }
+                else {
+                    console.log('incorrect');
+                    this.userInputText.setText('Error');
+                    this.userOperatorText.setText('');
+                    setTimeout(() => {
+                        this.userInputText.setText('');
+                    }, 1000);
+                    }
+            }
+            else if (userProgress === 1) {
+                if (userAnswer === solutions[0]){
+                    console.log('step 2 correct');
+                    this.userInputText.setText('Good!');
+                    this.userOperatorText.setText('');
+                    setTimeout(() => {
+                        this.userInputText.setText('');
+                    }, 1000);
+                    this.currentProblemText.setText(this.solveProblem(userProgress));
+                    userProgress ++;
+                    solutions.shift();
+                    }
+                    
+                else {
+                    console.log('incorrect');
+                    this.userInputText.setText('Error');
+                    this.userOperatorText.setText('');
+                    setTimeout(() => {
+                        this.userInputText.setText('');
+                    }, 1000);
+                    }
+            }
+        };
     };
 
     resetGame() {
