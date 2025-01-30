@@ -86,8 +86,12 @@ class GameScene extends Phaser.Scene {
         this.opContainer = this.add.container(142, 400);
         this.optionContainer = this.add.container(610, 400);
         
-        this.add.rectangle(this.cameras.main.width - 40, 80, 384, 125, 0xC0C0C0, 0.4).setOrigin(1, 0);
-        this.add.rectangle(this.cameras.main.width - 40, 225, 384, 415, 0xC0C0C0, 0.4).setOrigin(1, 0);
+        const sideRect1 = this.add.rectangle(this.cameras.main.width - 40, 80, 384, 125, 0xC0C0C0, 0.4).setOrigin(1, 0);
+        const sideRect2 = this.add.rectangle(this.cameras.main.width - 40, 225, 384, 415, 0xC0C0C0, 0.4).setOrigin(1, 0);
+        const title = this.add.bitmapText(sideRect1.x - sideRect1.width/2, sideRect1.y + sideRect1.height/2, 'VCR_osd_mono', 'One Variable Equations', 24).setOrigin(0.5, 0.5).setTint(0x000000);
+        const logText = this.add.bitmapText(sideRect2.x - sideRect2.width + 24, sideRect2.y + 72, 'VCR_osd_mono', 'Log', 24);
+        this.logContainer = this.add.container(logText.x, logText.y + 52);
+        this.logContainer.add(this.add.bitmapText(0, 0, 'VCR_osd_mono', this.currentProblemText.text, 32));
 
         //Loop to create numberpad buttons with sprite image
         for (let row = 0; row < 4; row++) {
@@ -376,6 +380,7 @@ class GameScene extends Phaser.Scene {
             if (userProgress === 0) {
                 if (userAnswer === solutions[0]){
                     console.log('step 1 correct');
+                    this.updateLog(this.solveProblem(userProgress));
                     this.userInputText.setText('Good!');
                     this.userOperatorText.setText('');
                     setTimeout(() => {
@@ -398,6 +403,7 @@ class GameScene extends Phaser.Scene {
             else if (userProgress === 1) {
                 if (userAnswer === solutions[0]){
                     console.log('step 2 correct');
+                    this.updateLog(this.solveProblem(userProgress));
                     this.userInputText.setText('Good!');
                     this.userOperatorText.setText('');
                     setTimeout(() => {
@@ -419,6 +425,15 @@ class GameScene extends Phaser.Scene {
             }
         };
     };
+
+    //Method to update the log with user input and result
+    updateLog(result) {
+        const newLog = this.add.bitmapText(0, (0 + this.logContainer.list.length * 48), 'VCR_osd_mono', this.userOperatorText.text + this.userInputText.text, 32).setTint(0xFF0000);
+        this.logContainer.add(newLog);
+
+        const nextLog = this.add.bitmapText(0, (0 + this.logContainer.list.length * 48), 'VCR_osd_mono', result, 32);
+        this.logContainer.add(nextLog);
+    }
 
     resetGame() {
         solutions = [];
