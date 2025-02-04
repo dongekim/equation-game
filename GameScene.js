@@ -39,14 +39,19 @@ class GameScene extends Phaser.Scene {
 
     create() 
     {
+        const background = this.add.image(0, 0, 'background').setOrigin(0, 0).setAlpha(0.7);
+
         // BACKGROUND IMAGE SETUP, CHANGE TO BETTER BACKGROUND LATER
         const monitor = this.add.image(40, 80, 'monitor').setOrigin(0, 0);
+        monitor.setScale(1.078, 1);
         console.log(userProgress);
+
+
 
         //Loads math problem as text on screen
         this.problem = this.createProblem(); // Assign the returned problem object to this.problem
         console.log(this.problem);
-        this.currentProblemText = this.add.bitmapText(220, 118, 'VCR_osd_mono', this.problem.text, 50).setOrigin(0).setTint(0x000000);
+        this.currentProblemText = this.add.bitmapText(monitor.x + monitor.width/2, monitor.y + monitor.height/2, 'VCR_osd_mono', this.problem.text, 50).setOrigin(0.5, 0.5).setTint(0x000000);
 
         //Keypad press animation
         this.anims.create({
@@ -93,6 +98,9 @@ class GameScene extends Phaser.Scene {
         this.logContainer = this.add.container(logText.x, logText.y + 52);
         this.logContainer.add(this.add.bitmapText(0, 0, 'VCR_osd_mono', this.currentProblemText.text, 32));
 
+        this.add.image(sideRect2.x - sideRect2.width + 24, sideRect2.y + 24, 'lockframe').setOrigin(0, 0).setScale(1/4, 1/4);
+        this.add.image(sideRect2.x - sideRect2.width + 24, sideRect2.y + 24, 'lock').setOrigin(0, 0).setScale(1/4, 1/4);
+        
         //Loop to create numberpad buttons with sprite image
         for (let row = 0; row < 4; row++) {
             for (let col = 0; col < 3; col++) {

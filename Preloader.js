@@ -14,6 +14,9 @@ class Preloader extends Phaser.Scene
         //this.load.setPath();
         //this.load.audio();
         this.load.image('monitor', 'assets/monitor.png');
+        this.load.image('background', 'assets/background_cyberpunk.png');
+        this.load.image('lockframe', 'assets/lock slot frame.png');
+        this.load.image('lock', 'assets/lock.png')
         this.load.spritesheet('keypad_blue', 'assets/keypad_button-Sheet.png', {frameWidth: 76, frameHeight: 76});
         this.load.spritesheet('keypad_orange', 'assets/keypad_button_orange-Sheet.png', {frameWidth: 76, frameHeight: 76});
         this.load.spritesheet('keypad_wide', 'assets/keypad_button_wide-Sheet.png', {frameWidth: 152, frameHeight: 76});
