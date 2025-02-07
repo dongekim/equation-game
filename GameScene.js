@@ -98,8 +98,8 @@ class GameScene extends Phaser.Scene {
         this.logContainer = this.add.container(logText.x, logText.y + 52);
         this.logContainer.add(this.add.bitmapText(0, 0, 'VCR_osd_mono', this.currentProblemText.text, 32));
 
-        this.add.image(sideRect2.x - sideRect2.width + 24, sideRect2.y + 24, 'lockframe').setOrigin(0, 0).setScale(1/4, 1/4);
-        this.add.image(sideRect2.x - sideRect2.width + 24, sideRect2.y + 24, 'lock').setOrigin(0, 0).setScale(1/4, 1/4);
+        const lockFrame = this.add.image(sideRect2.x - sideRect2.width + 24, sideRect2.y + 24, 'lockframe').setOrigin(0, 0).setScale(1/4, 1/4);
+        const lock = this.add.image(sideRect2.x - sideRect2.width + 24, sideRect2.y + 24, 'lock').setOrigin(0, 0).setScale(1/4, 1/4);
         
         //Loop to create numberpad buttons with sprite image
         for (let row = 0; row < 4; row++) {
