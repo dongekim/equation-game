@@ -46,6 +46,7 @@ class GameScene extends Phaser.Scene {
         monitor.setScale(1.078, 1);
         console.log(userProgress);
 
+        const bar1 = this.add.nineslice(1050, 300, 'ui', 'progressbar', 800, 112, 48, 48, 48, 48).setScale(0.4)
 
 
         //Loads math problem as text on screen

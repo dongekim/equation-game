@@ -13,6 +13,7 @@ class Preloader extends Phaser.Scene
         //this.load.setBaseURL();
         //this.load.setPath();
         //this.load.audio();
+        this.load.atlas('ui', 'assets/ui.png', 'assets/ui_atlas.json');
         this.load.image('monitor', 'assets/monitor.png');
         this.load.image('background', 'assets/background_cyberpunk.png');
         this.load.image('lockframe', 'assets/lock slot frame.png');
