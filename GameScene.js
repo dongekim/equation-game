@@ -1,8 +1,11 @@
 import Preloader from "/Preloader.js";
 
-let solutions = [];
-let userProgress = 0;
-let result = 0;
+const gameState = {
+    stage: 0,
+    solutions: [],
+    userProgress: 0,
+    result: 0,
+};
 
 class GameScene extends Phaser.Scene {
     constructor() {
@@ -44,10 +47,28 @@ class GameScene extends Phaser.Scene {
         // BACKGROUND IMAGE SETUP, CHANGE TO BETTER BACKGROUND LATER
         const monitor = this.add.image(40, 80, 'monitor').setOrigin(0, 0);
         monitor.setScale(1.078, 1);
-        console.log(userProgress);
+        console.log(gameState.userProgress);
 
-        const bar1 = this.add.nineslice(1050, 300, 'ui', 'progressbar', 800, 112, 48, 48, 48, 48).setScale(0.4)
+        const titleBg = this.add.nineslice(this.cameras.main.width - 40, 80, 'ui', 'box_yellow', 384, 125, 48, 48, 48, 48).setOrigin(1,0);
+        
+        const logBg = this.add.nineslice(this.cameras.main.width - 40, 225, 'ui', 'box_yellow', 384, 415, 48, 48, 48, 48).setOrigin(1,0);
+        const progressBar = this.add.nineslice(890, 270, 'ui', 'progressbar', 800, 112, 48, 48, 24, 24).setScale(0.4).setOrigin(0, 0.5);
+        const blueFill = this.add.nineslice(progressBar.x + 10, 270, 'ui', 'fill_blue', 50, 64, 24, 24, 24, 24).setScale(0.4).setOrigin(0, 0.5);
 
+        const progressBarTween = this.tweens.add({
+            targets: blueFill,
+            width: 50 + ((gameState.stage + 1) * 50),
+            duration: 2000,
+            ease: 'Sine.easeInOut',
+            paused: true,
+            onUpdate: () => {
+                blueFill.setSize(blueFill.width, 64);
+            },
+            onComplete: () => {
+                gameState.stage ++;
+            }
+        });
+        
 
         //Loads math problem as text on screen
         this.problem = this.createProblem(); // Assign the returned problem object to this.problem
@@ -92,15 +113,12 @@ class GameScene extends Phaser.Scene {
         this.opContainer = this.add.container(142, 400);
         this.optionContainer = this.add.container(610, 400);
         
-        const sideRect1 = this.add.rectangle(this.cameras.main.width - 40, 80, 384, 125, 0xC0C0C0, 0.4).setOrigin(1, 0);
-        const sideRect2 = this.add.rectangle(this.cameras.main.width - 40, 225, 384, 415, 0xC0C0C0, 0.4).setOrigin(1, 0);
+        const sideRect1 = this.add.rectangle(this.cameras.main.width - 40, 80, 384, 125, 0xC0C0C0, 0.4).setOrigin(1, 0).setAlpha(0);
+        const sideRect2 = this.add.rectangle(this.cameras.main.width - 40, 225, 384, 415, 0xC0C0C0, 0.4).setOrigin(1, 0).setAlpha(0);
         const title = this.add.bitmapText(sideRect1.x - sideRect1.width/2, sideRect1.y + sideRect1.height/2, 'VCR_osd_mono', 'One Variable Equations', 24).setOrigin(0.5, 0.5).setTint(0x000000);
-        const logText = this.add.bitmapText(sideRect2.x - sideRect2.width + 24, sideRect2.y + 72, 'VCR_osd_mono', 'Log', 24);
+        const logText = this.add.bitmapText(sideRect2.x - sideRect2.width + 24, sideRect2.y + 72, 'VCR_osd_mono', 'Log', 24).setTint(0x0000FF);
         this.logContainer = this.add.container(logText.x, logText.y + 52);
-        this.logContainer.add(this.add.bitmapText(0, 0, 'VCR_osd_mono', this.currentProblemText.text, 32));
-
-        const lockFrame = this.add.image(sideRect2.x - sideRect2.width + 24, sideRect2.y + 24, 'lockframe').setOrigin(0, 0).setScale(1/4, 1/4);
-        const lock = this.add.image(sideRect2.x - sideRect2.width + 24, sideRect2.y + 24, 'lock').setOrigin(0, 0).setScale(1/4, 1/4);
+        this.logContainer.add(this.add.bitmapText(0, 0, 'VCR_osd_mono', this.currentProblemText.text, 32).setTint(0x000000));
         
         //Loop to create numberpad buttons with sprite image
         for (let row = 0; row < 4; row++) {
@@ -260,6 +278,21 @@ class GameScene extends Phaser.Scene {
             }
         );
 
+        //Creates the next button to move progress
+        gameState.nextButton = this.add.bitmapText(this.optionContainer.x, this.optionContainer.y + 180, 'VCR_osd_mono', 'Next!', 32).setOrigin(0.5).setInteractive();
+        gameState.nextButton.setVisible(false);
+        gameState.nextButton.on('pointerover', () => {
+            gameState.nextButton.setTint(0x39e75f);
+        });
+        gameState.nextButton.on('pointerout', () => {
+            gameState.nextButton.setTint(0xffffff);
+        });
+        gameState.nextButton.on('pointerdown', () => {
+            progressBarTween.play();
+            gameState.nextButton.setVisible(false);
+            
+        });
+
 
 
 
@@ -294,35 +327,35 @@ class GameScene extends Phaser.Scene {
 
         // *slice from index 2 because I intentionally put a space after sign for plus and minus
         if (problem.term1.sign === '+') {
-            solutions.push('-' + term1);
-            solutions.push('/' + coefficient);
+            gameState.solutions.push('-' + term1);
+            gameState.solutions.push('/' + coefficient);
         }
         else if (problem.term1.sign === '-') {
-            solutions.push('+' + term1);
-            solutions.push('/' + coefficient);
+            gameState.solutions.push('+' + term1);
+            gameState.solutions.push('/' + coefficient);
         }
-        console.log(solutions);
+        console.log(gameState.solutions);
         return problem;
     };
 
     solveProblem(userProgress) {
         if (userProgress === 0) {
             if (this.problem.term1.sign === '+') {
-                result = this.problem.lastValue - this.problem.term1.value;
+                gameState.result = this.problem.lastValue - this.problem.term1.value;
             }
             else if (this.problem.term1.sign === '-') {
-                result = this.problem.lastValue + this.problem.term1.value;
+                gameState.result = this.problem.lastValue + this.problem.term1.value;
             }
-            console.log(result);
-            console.log(solutions);
-            return `${this.problem.coefficient}${this.problem.variable} = ${result}`;
+            console.log(gameState.result);
+            console.log(gameState.solutions);
+            return `${this.problem.coefficient}${this.problem.variable} = ${gameState.result}`;
         }
         else if (userProgress === 1) {
-            result /= this.problem.coefficient;
+            gameState.result /= this.problem.coefficient;
             // Round the result to 2 decimal places
-            result = parseFloat(result.toFixed(2));
-            console.log(`Final Answer: ${result}`);
-            return `${this.problem.variable} = ${result}`;
+            gameState.result = parseFloat(gameState.result.toFixed(2));
+            console.log(`Final Answer: ${gameState.result}`);
+            return `${this.problem.variable} = ${gameState.result}`;
         }
         else {
             console.log('Error: function solveProblem cannot solve this type of equation');
@@ -368,7 +401,7 @@ class GameScene extends Phaser.Scene {
 
     //Method for selecting DEL and ENTER options
     selectOption(pointer) {
-        console.log(`Current userProgress: ${userProgress}`);
+        console.log(`Current userProgress: ${gameState.userProgress}`);
         const localY = pointer.y - (this.optionContainer.y - this.buttonHeight/2);
         const cy = Phaser.Math.Snap.Floor(localY, 80, 0, true);
         const selection = this.options[cy][0];
@@ -386,19 +419,20 @@ class GameScene extends Phaser.Scene {
             console.log('User answer:', userAnswer);
             this.userInput = '';
 
-            if (userProgress === 0) {
-                if (userAnswer === solutions[0]){
+            if (gameState.userProgress === 0) {
+                if (userAnswer === gameState.solutions[0]){
                     console.log('step 1 correct');
-                    this.updateLog(this.solveProblem(userProgress));
+                    const result0 = this.solveProblem(gameState.userProgress);
+                    this.updateLog(result0);
                     this.userInputText.setText('Good!');
                     this.userOperatorText.setText('');
                     setTimeout(() => {
                         this.userInputText.setText('');
                     }, 1000);
-                    this.currentProblemText.setText(this.solveProblem(userProgress));
-                    userProgress ++;
-                    console.log(`userProgress after step1: ${userProgress}`);
-                    solutions.shift();
+                    this.currentProblemText.setText(result0);
+                    gameState.userProgress ++;
+                    console.log(`userProgress after step1: ${gameState.userProgress}`);
+                    gameState.solutions.shift();
                     }
                 else {
                     console.log('incorrect');
@@ -409,18 +443,20 @@ class GameScene extends Phaser.Scene {
                     }, 1000);
                     }
             }
-            else if (userProgress === 1) {
-                if (userAnswer === solutions[0]){
+            else if (gameState.userProgress === 1) {
+                if (userAnswer === gameState.solutions[0]){
                     console.log('step 2 correct');
-                    this.updateLog(this.solveProblem(userProgress));
+                    const solution1 = this.solveProblem(gameState.userProgress);
+                    this.updateLog(solution1);
                     this.userInputText.setText('Good!');
                     this.userOperatorText.setText('');
                     setTimeout(() => {
                         this.userInputText.setText('');
                     }, 1000);
-                    this.currentProblemText.setText(this.solveProblem(userProgress));
-                    userProgress ++;
-                    solutions.shift();
+                    this.currentProblemText.setText(solution1);
+                    gameState.userProgress ++;
+                    gameState.solutions.shift();
+                    gameState.nextButton.setVisible(true);
                     }
                     
                 else {
@@ -438,16 +474,17 @@ class GameScene extends Phaser.Scene {
     //Method to update the log with user input and result
     updateLog(result) {
         const newLog = this.add.bitmapText(0, (0 + this.logContainer.list.length * 48), 'VCR_osd_mono', this.userOperatorText.text + this.userInputText.text, 32).setTint(0xFF0000);
+        newLog.setTint(0xFF0000)
         this.logContainer.add(newLog);
 
-        const nextLog = this.add.bitmapText(0, (0 + this.logContainer.list.length * 48), 'VCR_osd_mono', result, 32);
+        const nextLog = this.add.bitmapText(0, (0 + this.logContainer.list.length * 48), 'VCR_osd_mono', result, 32).setTint(0x000000);
         this.logContainer.add(nextLog);
     }
 
     resetGame() {
-        solutions = [];
-        userProgress = 0;
-        result = 0;
+        gameState.solutions = [];
+        gameState.userProgress = 0;
+        gameState.result = 0;
     };
 
 
