@@ -2,6 +2,7 @@ import Preloader from "/Preloader.js";
 
 const gameState = {
     stage: 0,
+    maxStage: 4,
     solutions: [],
     userProgress: 0,
     result: 0,
@@ -33,13 +34,6 @@ class GameScene extends Phaser.Scene {
         this.currentProblemText = null;
     }
 
-    
-    preload()
-    {
-   
-    }
-    
-
     create() 
     {
         const background = this.add.image(0, 0, 'background').setOrigin(0, 0).setAlpha(0.7);
@@ -53,21 +47,36 @@ class GameScene extends Phaser.Scene {
         
         const logBg = this.add.nineslice(this.cameras.main.width - 40, 225, 'ui', 'box_yellow', 384, 415, 48, 48, 48, 48).setOrigin(1,0);
         const progressBar = this.add.nineslice(890, 270, 'ui', 'progressbar', 800, 112, 48, 48, 24, 24).setScale(0.4).setOrigin(0, 0.5);
-        const blueFill = this.add.nineslice(progressBar.x + 10, 270, 'ui', 'fill_blue', 50, 64, 24, 24, 24, 24).setScale(0.4).setOrigin(0, 0.5);
+        const blueFill = this.add.nineslice(progressBar.x + 10, 270, 'ui', 'fill_blue', 48, 64, 24, 24, 24, 24).setScale(0.4).setOrigin(0, 0.5);
 
-        const progressBarTween = this.tweens.add({
-            targets: blueFill,
-            width: 50 + ((gameState.stage + 1) * 50),
-            duration: 2000,
-            ease: 'Sine.easeInOut',
-            paused: true,
-            onUpdate: () => {
-                blueFill.setSize(blueFill.width, 64);
-            },
-            onComplete: () => {
-                gameState.stage ++;
+        // Keeps track of previous stage number to compare against current stage number
+        let previousStage = gameState.stage;
+
+        console.log(progressBar.width)
+
+        // Tween to animate progress bar
+        const updateTween = () => {
+            if (gameState.stage > previousStage) {
+                this.tweens.add({
+                    targets: blueFill,
+                    width: ((gameState.stage) * (progressBar.width / gameState.maxStage)) - 48,
+                    duration: 2000,
+                    ease: 'Quad.easeInOut',
+                    onUpdate: () => {
+                        blueFill.setSize(blueFill.width, 64);
+                    },
+                    onComplete: () => {
+                        previousStage = gameState.stage;
+                        updateTween();
+                    }
+                });
             }
-        });
+            else if (gameState.stage === gameState.maxStage) {
+                console.log('Game Complete!')
+            }
+        };
+
+        updateTween();
         
 
         //Loads math problem as text on screen
@@ -288,12 +297,21 @@ class GameScene extends Phaser.Scene {
             gameState.nextButton.setTint(0xffffff);
         });
         gameState.nextButton.on('pointerdown', () => {
-            progressBarTween.play();
+            updateTween();
             gameState.nextButton.setVisible(false);
-            
+
+            gameState.solutions = [];
+            gameState.userProgress = 0;
+            gameState.result = 0;
+            this.logContainer.removeAll(true);
+            this.problem = this.createProblem();
+            this.logContainer.add(this.add.bitmapText(0, 0, 'VCR_osd_mono', this.problem.text, 32).setTint(0x000000));
+            this.currentProblemText.setText(this.problem.text);
+            console.log(this.problem.text);
+            console.log(`Stage: ${gameState.stage}`);
         });
 
-
+        this.showPopup('loser');
 
 
     }
@@ -456,6 +474,7 @@ class GameScene extends Phaser.Scene {
                     this.currentProblemText.setText(solution1);
                     gameState.userProgress ++;
                     gameState.solutions.shift();
+                    gameState.stage ++;
                     gameState.nextButton.setVisible(true);
                     }
                     
@@ -479,13 +498,72 @@ class GameScene extends Phaser.Scene {
 
         const nextLog = this.add.bitmapText(0, (0 + this.logContainer.list.length * 48), 'VCR_osd_mono', result, 32).setTint(0x000000);
         this.logContainer.add(nextLog);
+    };
+
+    // **** WIP Post-Game Completion Popup message
+    showPopup(message) {
+        // Pause the game
+        this.scene.pause();
+        console.log('Game paused. showing popup...');
+
+        // Create an invisible overlay to block interactions
+        let overlay = this.add.rectangle(
+            this.cameras.main.width / 2, 
+            this.cameras.main.height / 2, 
+            this.cameras.main.width, 
+            this.cameras.main.height, 
+            0x000000, 0.5
+        ).setInteractive(); // Prevents clicks on game objects
+
+        // Create a container for the popup
+        let popup = this.add.container(this.cameras.main.width / 2, this.cameras.main.height / 2);
+        
+        // Background for the popup
+        let bg = this.add.rectangle(0, 0, 300, 150, 0x222222, 0.9);
+        bg.setOrigin(0.5);
+
+        // Popup text
+        let text = this.add.text(0, -20, message, {
+            fontSize: "20px",
+            color: "#ffffff",
+            align: "center",
+            wordWrap: { width: 280 }
+        }).setOrigin(0.5);
+        
+        // Close button
+        let closeButton = this.add.text(0, 50, "Close", {
+            fontSize: "18px",
+            backgroundColor: "#ff0000",
+            padding: { x: 10, y: 5 }
+        }).setOrigin(0.5).setInteractive();
+
+        // Close the popup and resume the game
+        closeButton.on("pointerdown", () => {
+            popup.destroy();
+            overlay.destroy();
+            this.scene.resume(); // Resume the game
+        });
+
+        // Add elements to the container
+        popup.add([bg, text, closeButton]);
+
+        // Optional: Popup animation (fade in)
+        popup.setScale(0);
+        this.tweens.add({
+            targets: popup,
+            scale: 1,
+            duration: 300,
+            ease: "Back.Out"
+        });
     }
 
     resetGame() {
         gameState.solutions = [];
         gameState.userProgress = 0;
         gameState.result = 0;
+        gameState.stage = 0;
     };
+
 
 
 
