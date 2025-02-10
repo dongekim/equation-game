@@ -41,18 +41,9 @@ class GameScene extends Phaser.Scene {
         // BACKGROUND IMAGE SETUP, CHANGE TO BETTER BACKGROUND LATER
         const monitor = this.add.image(40, 80, 'monitor').setOrigin(0, 0);
         monitor.setScale(1.078, 1);
-        console.log(gameState.userProgress);
-
-        const titleBg = this.add.nineslice(this.cameras.main.width - 40, 80, 'ui', 'box_yellow', 384, 125, 48, 48, 48, 48).setOrigin(1,0);
-        
-        const logBg = this.add.nineslice(this.cameras.main.width - 40, 225, 'ui', 'box_yellow', 384, 415, 48, 48, 48, 48).setOrigin(1,0);
-        const progressBar = this.add.nineslice(890, 270, 'ui', 'progressbar', 800, 112, 48, 48, 24, 24).setScale(0.4).setOrigin(0, 0.5);
-        const blueFill = this.add.nineslice(progressBar.x + 10, 270, 'ui', 'fill_blue', 48, 64, 24, 24, 24, 24).setScale(0.4).setOrigin(0, 0.5);
 
         // Keeps track of previous stage number to compare against current stage number
         let previousStage = gameState.stage;
-
-        console.log(progressBar.width)
 
         // Tween to animate progress bar
         const updateTween = () => {
@@ -81,35 +72,41 @@ class GameScene extends Phaser.Scene {
 
         //Loads math problem as text on screen
         this.problem = this.createProblem(); // Assign the returned problem object to this.problem
-        console.log(this.problem);
         this.currentProblemText = this.add.bitmapText(monitor.x + monitor.width/2, monitor.y + monitor.height/2, 'VCR_osd_mono', this.problem.text, 50).setOrigin(0.5, 0.5).setTint(0x000000);
+        console.log(`Current Stage: ${gameState.stage}`);
 
         //Keypad press animation
-        this.anims.create({
-            key: 'keypad_blue_press',
-            frames: this.anims.generateFrameNumbers('keypad_blue', { start: 0, end: 1 }),
-            frameRate: 12,
-            repeat: 0,
-            yoyo: true
-        });
+        if (!this.anims.exists('keypad_blue_press')) {
+            this.anims.create({
+                key: 'keypad_blue_press',
+                frames: this.anims.generateFrameNumbers('keypad_blue', { start: 0, end: 1 }),
+                frameRate: 12,
+                repeat: 0,
+                yoyo: true
+            });
+        }
 
-        this.anims.create({
-            key: 'keypad_orange_press',
-            frames: this.anims.generateFrameNumbers('keypad_orange', { start: 0, end: 1 }),
-            frameRate: 12,
-            repeat: 0,
-            yoyo: true
-        });
+        if (!this.anims.exists('keypad_orange_press')) {
+            this.anims.create({
+                key: 'keypad_orange_press',
+                frames: this.anims.generateFrameNumbers('keypad_orange', { start: 0, end: 1 }),
+                frameRate: 12,
+                repeat: 0,
+                yoyo: true
+            });
+        }
 
-        this.anims.create({
-            key: 'keypad_wide_press',
-            frames: this.anims.generateFrameNumbers('keypad_wide', { start: 0, end: 1 }),
-            frameRate: 12,
-            repeat: 0,
-            yoyo: true
-        })
+        if (!this.anims.exists('keypad_wide_press')) {
+            this.anims.create({
+                key: 'keypad_wide_press',
+                frames: this.anims.generateFrameNumbers('keypad_wide', { start: 0, end: 1 }),
+                frameRate: 12,
+                repeat: 0,
+                yoyo: true
+            });
+        }
 
-        //Specs for numberPad buttons
+        // Specs for numberPad buttons
         this.buttonWidth = 76; // Width of each button
         this.buttonHeight = 76; // Height of each button
         const startX = 800; // Starting X position
@@ -117,19 +114,26 @@ class GameScene extends Phaser.Scene {
         const spacingX = -4; // Horizontal spacing between buttons
         const spacingY = -4; // Vertical spacing between buttons
 
-        //Creates containers for numberPad and operatorPad, also sets their positions on screen
-        this.numContainer = this.add.container(346, 400);
-        this.opContainer = this.add.container(142, 400);
-        this.optionContainer = this.add.container(610, 400);
+        // Creates containers for number keys, operator keys, and option (DEL, ENTER) keys
+        this.numContainer = this.add.container(346, 400); // Number Container
+        this.opContainer = this.add.container(142, 400); // Operator Container
+        this.optionContainer = this.add.container(610, 400); // DEL, ENTER Container
+
+        // Creates UI for Title Box and Log Box
+        const titleBg = this.add.nineslice(this.cameras.main.width - 40, 80, 'ui', 'box_yellow', 384, 125, 48, 48, 48, 48).setOrigin(1,0);
+        const logBg = this.add.nineslice(0, 0, 'ui', 'box_yellow', 384, 415, 48, 48, 48, 48).setOrigin(0.5, 0);
+        const progressBar = this.add.nineslice(0, 24, 'ui', 'progressbar', 800, 112, 48, 48, 24, 24).setScale(0.4).setOrigin(0.5, 0);
+        const blueFill = this.add.nineslice(-(progressBar.width * 0.4 / 2) + 10, 32, 'ui', 'fill_blue', 48, 64, 24, 24, 24, 24).setScale(0.4).setOrigin(0, 0);
+        console.log(progressBar.width)
+        const titleText = this.add.bitmapText(titleBg.x - titleBg.width/2, titleBg.y + titleBg.height/2, 'VCR_osd_mono', 'One Variable Equations', 24).setOrigin(0.5, 0.5).setTint(0x000000);
+        const logText = this.add.bitmapText(progressBar.x, logBg.y + 88, 'VCR_osd_mono', 'Log', 24).setTint(0x0000FF);
+        this.logContainer = this.add.container(1048, 200);
+
+        const initialLog = this.add.bitmapText(0, 0, 'VCR_osd_mono', this.currentProblemText.text, 32).setTint(0x000000);
+
+        this.logContainer.add([logBg, progressBar, blueFill, initialLog]);
         
-        const sideRect1 = this.add.rectangle(this.cameras.main.width - 40, 80, 384, 125, 0xC0C0C0, 0.4).setOrigin(1, 0).setAlpha(0);
-        const sideRect2 = this.add.rectangle(this.cameras.main.width - 40, 225, 384, 415, 0xC0C0C0, 0.4).setOrigin(1, 0).setAlpha(0);
-        const title = this.add.bitmapText(sideRect1.x - sideRect1.width/2, sideRect1.y + sideRect1.height/2, 'VCR_osd_mono', 'One Variable Equations', 24).setOrigin(0.5, 0.5).setTint(0x000000);
-        const logText = this.add.bitmapText(sideRect2.x - sideRect2.width + 24, sideRect2.y + 72, 'VCR_osd_mono', 'Log', 24).setTint(0x0000FF);
-        this.logContainer = this.add.container(logText.x, logText.y + 52);
-        this.logContainer.add(this.add.bitmapText(0, 0, 'VCR_osd_mono', this.currentProblemText.text, 32).setTint(0x000000));
-        
-        //Loop to create numberpad buttons with sprite image
+        // Loop to create numberpad buttons with sprite image
         for (let row = 0; row < 4; row++) {
             for (let col = 0; col < 3; col++) {
                 const x = col * (this.buttonWidth + spacingX);
@@ -307,11 +311,10 @@ class GameScene extends Phaser.Scene {
             this.problem = this.createProblem();
             this.logContainer.add(this.add.bitmapText(0, 0, 'VCR_osd_mono', this.problem.text, 32).setTint(0x000000));
             this.currentProblemText.setText(this.problem.text);
-            console.log(this.problem.text);
-            console.log(`Stage: ${gameState.stage}`);
+            console.log(`Current Stage: ${gameState.stage}`);
         });
 
-        this.showPopup('loser');
+        //this.showPopup('SUCCESS');
 
 
     }
@@ -341,7 +344,6 @@ class GameScene extends Phaser.Scene {
         };
         problem.lastValue = lastValue;
         problem.text = `${problem.coefficient}${problem.variable} ${problem.term1.sign} ${problem.term1.value} = ${problem.lastValue}`;
-        console.log(problem);
 
         // *slice from index 2 because I intentionally put a space after sign for plus and minus
         if (problem.term1.sign === '+') {
@@ -352,7 +354,6 @@ class GameScene extends Phaser.Scene {
             gameState.solutions.push('+' + term1);
             gameState.solutions.push('/' + coefficient);
         }
-        console.log(gameState.solutions);
         return problem;
     };
 
@@ -364,20 +365,16 @@ class GameScene extends Phaser.Scene {
             else if (this.problem.term1.sign === '-') {
                 gameState.result = this.problem.lastValue + this.problem.term1.value;
             }
-            console.log(gameState.result);
-            console.log(gameState.solutions);
             return `${this.problem.coefficient}${this.problem.variable} = ${gameState.result}`;
         }
         else if (userProgress === 1) {
             gameState.result /= this.problem.coefficient;
             // Round the result to 2 decimal places
             gameState.result = parseFloat(gameState.result.toFixed(2));
-            console.log(`Final Answer: ${gameState.result}`);
             return `${this.problem.variable} = ${gameState.result}`;
         }
         else {
             console.log('Error: function solveProblem cannot solve this type of equation');
-            console.log(userProgress)
             return 'Error, cannot solve this type of equation';
         }
     };
@@ -387,15 +384,12 @@ class GameScene extends Phaser.Scene {
     selectNumber(pointer) {
         const localX = pointer.x - (this.numContainer.x - this.buttonWidth/2);
         const localY = pointer.y - (this.numContainer.y - this.buttonHeight/2);
-        console.log(`localX = ${localX}, localY = ${localY}, ${this.buttonWidth}`);
         
         const cx = Phaser.Math.Snap.Floor(localX, 76, 0, true);
         const cy = Phaser.Math.Snap.Floor(localY, 76, 0, true);
-        console.log(`cx = ${cx}, cy = ${cy}`);
 
         if (cx >= 0 && cx < 3 && cy >= 0 && cy < 4) {
             const selectedNum = this.numbers[cy][cx];
-            console.log(selectedNum);
             if (this.userInput.length < 5) {
                 this.userInput += selectedNum;
                 this.userInputText.setText(this.userInput);
@@ -417,24 +411,18 @@ class GameScene extends Phaser.Scene {
         }
     };
 
-    //Method for selecting DEL and ENTER options
+    // Clicking on DEL & ENTER Buttons --> Checks user answer and updates log
     selectOption(pointer) {
-        console.log(`Current userProgress: ${gameState.userProgress}`);
         const localY = pointer.y - (this.optionContainer.y - this.buttonHeight/2);
         const cy = Phaser.Math.Snap.Floor(localY, 80, 0, true);
         const selection = this.options[cy][0];
-        console.log(`localY = ${localY}, cy = ${cy}, selection = ${selection}`);
         if (selection === 'DEL') {
-            console.log('Pressed DEL');
             this.userInput = this.userInput.slice(0, -1);
             this.userInputText.setText(this.userInput);
         }
         
         else if (selection === 'ENTER') {
-            console.log('Pressed ENTER');
             let userAnswer = `${this.userOperatorText.text}${this.userInputText.text}`
-            console.log('User input:', this.userInput);
-            console.log('User answer:', userAnswer);
             this.userInput = '';
 
             if (gameState.userProgress === 0) {
@@ -449,7 +437,6 @@ class GameScene extends Phaser.Scene {
                     }, 1000);
                     this.currentProblemText.setText(result0);
                     gameState.userProgress ++;
-                    console.log(`userProgress after step1: ${gameState.userProgress}`);
                     gameState.solutions.shift();
                     }
                 else {
@@ -461,6 +448,7 @@ class GameScene extends Phaser.Scene {
                     }, 1000);
                     }
             }
+            // Final step in checking user answer
             else if (gameState.userProgress === 1) {
                 if (userAnswer === gameState.solutions[0]){
                     console.log('step 2 correct');
@@ -476,6 +464,10 @@ class GameScene extends Phaser.Scene {
                     gameState.solutions.shift();
                     gameState.stage ++;
                     gameState.nextButton.setVisible(true);
+                    
+                    if (gameState.stage > gameState.maxStage) {
+                        this.showPopup('SUCCESS');
+                    };
                     }
                     
                 else {
@@ -503,7 +495,7 @@ class GameScene extends Phaser.Scene {
     // **** WIP Post-Game Completion Popup message
     showPopup(message) {
         // Pause the game
-        this.scene.pause();
+        //this.scene.pause();
         console.log('Game paused. showing popup...');
 
         // Create an invisible overlay to block interactions
@@ -519,42 +511,71 @@ class GameScene extends Phaser.Scene {
         let popup = this.add.container(this.cameras.main.width / 2, this.cameras.main.height / 2);
         
         // Background for the popup
-        let bg = this.add.rectangle(0, 0, 300, 150, 0x222222, 0.9);
+        let bg = this.add.nineslice(0, 0, 'ui', 'window_blue', 320, 400, 64, 64, 64, 64);
         bg.setOrigin(0.5);
 
-        // Popup text
-        let text = this.add.text(0, -20, message, {
-            fontSize: "20px",
-            color: "#ffffff",
-            align: "center",
-            wordWrap: { width: 280 }
+        const title = this.add.bitmapText(0, -112, 'VCR_osd_mono', message, 50).setOrigin(0.5).setTint(0xFFFFFF);
+        const body = this.add.text(0, title.y + title.height + 16, 'You cracked the code!\nContinue playing for more practice.', {
+            fontFamily: 'Arial',
+            fontSize: '16px',
+            color: '#ffffff',
+            align: 'center',
+            wordWrap: { width: 240 }
         }).setOrigin(0.5);
-        
-        // Close button
-        let closeButton = this.add.text(0, 50, "Close", {
-            fontSize: "18px",
-            backgroundColor: "#ff0000",
-            padding: { x: 10, y: 5 }
-        }).setOrigin(0.5).setInteractive();
 
-        // Close the popup and resume the game
-        closeButton.on("pointerdown", () => {
+        // Option 1: 'Play Again'
+        const option1 = this.add.container(0, 48);
+        option1.setSize(200, 64).setInteractive();
+        const option1Bg = this.add.nineslice(0, 0, 'ui', 'box_yellow', 200, 64, 48, 48, 24, 24).setOrigin(0.5).setTint(0x31CC53);
+        const option1Text = this.add.text(0, 0, "PLAY AGAIN", {
+            fontFamily: 'Arial',
+            fontSize: "20px",
+            fontWeight: 'bold'
+        }).setOrigin(0.5);
+
+        option1.add([option1Bg, option1Text]);
+        option1.on('pointerover', () => {
+            option1Bg.setTint(0x2ab849);
+        });
+        option1.on('pointerout', () => {
+            option1Bg.setTint(0x39E75F);
+        });
+        option1.on("pointerdown", () => {
             popup.destroy();
             overlay.destroy();
-            this.scene.resume(); // Resume the game
+            this.scene.restart("GameScene");
+            console.log('Playing Again...')
+        });
+
+        // Option 2: 'Main Menu'
+        const option2 = this.add.container(0, 128);
+        option2.setSize(200, 64).setInteractive();
+        const option2Bg = this.add.nineslice(0, 0, 'ui', 'box_yellow', 200, 64, 48, 48, 24, 24).setOrigin(0.5);
+        const option2Text = this.add.text(0, 0, "MAIN MENU", {
+            fontFamily: 'Arial',
+            fontSize: "20px",
+            color: '#1C1C1C'
+        }).setOrigin(0.5);
+
+        option2.add([option2Bg, option2Text]);
+        option2.on('pointerover', () => {
+            option2Bg.setTint(0xe8d905);
+        });
+        option2.on('pointerout', () => {
+            option2Bg.clearTint();
+        });
+        option2.on("pointerdown", () => {
+            popup.destroy();
+            overlay.destroy();
+            this.scene.restart("GameScene");
+            console.log('**GAME RESTARTED**')
+            this.scene.stop('GameScene');
+            console.log('**GAMESCENE STOPPED**')
+            this.scene.start('StartScene');
         });
 
         // Add elements to the container
-        popup.add([bg, text, closeButton]);
-
-        // Optional: Popup animation (fade in)
-        popup.setScale(0);
-        this.tweens.add({
-            targets: popup,
-            scale: 1,
-            duration: 300,
-            ease: "Back.Out"
-        });
+        popup.add([bg, title, body, option1, option2]);
     }
 
     resetGame() {

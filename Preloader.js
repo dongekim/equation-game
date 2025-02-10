@@ -26,7 +26,8 @@ class Preloader extends Phaser.Scene
 
     create()
     {
-        this.scene.start("StartScene");
+        // **** SWITCH BACK TO STARTSCENE AFTER FINISHED TESTING
+        this.scene.start("GameScene");
     }
 
     
