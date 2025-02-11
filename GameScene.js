@@ -6,6 +6,7 @@ const gameState = {
     solutions: [],
     userProgress: 0,
     result: 0,
+    updatedLogCount: 0
 };
 
 class GameScene extends Phaser.Scene {
@@ -44,30 +45,6 @@ class GameScene extends Phaser.Scene {
 
         // Keeps track of previous stage number to compare against current stage number
         let previousStage = gameState.stage;
-
-        // Tween to animate progress bar
-        const updateTween = () => {
-            if (gameState.stage > previousStage) {
-                this.tweens.add({
-                    targets: blueFill,
-                    width: ((gameState.stage) * (progressBar.width / gameState.maxStage)) - 48,
-                    duration: 2000,
-                    ease: 'Quad.easeInOut',
-                    onUpdate: () => {
-                        blueFill.setSize(blueFill.width, 64);
-                    },
-                    onComplete: () => {
-                        previousStage = gameState.stage;
-                        updateTween();
-                    }
-                });
-            }
-            else if (gameState.stage === gameState.maxStage) {
-                console.log('Game Complete!')
-            }
-        };
-
-        updateTween();
         
 
         //Loads math problem as text on screen
@@ -121,17 +98,50 @@ class GameScene extends Phaser.Scene {
 
         // Creates UI for Title Box and Log Box
         const titleBg = this.add.nineslice(this.cameras.main.width - 40, 80, 'ui', 'box_yellow', 384, 125, 48, 48, 48, 48).setOrigin(1,0);
-        const logBg = this.add.nineslice(0, 0, 'ui', 'box_yellow', 384, 415, 48, 48, 48, 48).setOrigin(0.5, 0);
-        const progressBar = this.add.nineslice(0, 24, 'ui', 'progressbar', 800, 112, 48, 48, 24, 24).setScale(0.4).setOrigin(0.5, 0);
-        const blueFill = this.add.nineslice(-(progressBar.width * 0.4 / 2) + 10, 32, 'ui', 'fill_blue', 48, 64, 24, 24, 24, 24).setScale(0.4).setOrigin(0, 0);
+        const logBg = this.add.nineslice(0, 0, 'ui', 'box_yellow', 384, 415, 48, 48, 48, 48).setOrigin(0, 0);
+        const progressBar = this.add.nineslice(32, 32, 'ui', 'progressbar', 800, 112, 48, 48, 24, 24).setScale(0.4).setOrigin(0, 0);
+        const blueFill = this.add.nineslice((32 + 10), (32 + 9), 'ui', 'fill_blue', 48, 64, 24, 24, 24, 24).setScale(0.4).setOrigin(0, 0);
         console.log(progressBar.width)
         const titleText = this.add.bitmapText(titleBg.x - titleBg.width/2, titleBg.y + titleBg.height/2, 'VCR_osd_mono', 'One Variable Equations', 24).setOrigin(0.5, 0.5).setTint(0x000000);
-        const logText = this.add.bitmapText(progressBar.x, logBg.y + 88, 'VCR_osd_mono', 'Log', 24).setTint(0x0000FF);
-        this.logContainer = this.add.container(1048, 200);
+        const logText = this.add.bitmapText(36, 100, 'VCR_osd_mono', 'Log', 24).setTint(0x0000FF);
+        
+        this.logContainer = this.add.container(856, 200);
 
-        const initialLog = this.add.bitmapText(0, 0, 'VCR_osd_mono', this.currentProblemText.text, 32).setTint(0x000000);
+        const initialLog = this.add.bitmapText(36, 0, 'VCR_osd_mono', this.currentProblemText.text, 32).setTint(0x000000);
 
-        this.logContainer.add([logBg, progressBar, blueFill, initialLog]);
+        this.logContainer.add([logBg, logText, progressBar, blueFill]);
+
+        this.logTextContainer = this.add.container(856, (this.logContainer.y + 160));
+        this.logTextContainer.add([initialLog]);
+
+        
+        // Tween to animate progress bar
+        const updateTween = () => {
+            if (gameState.stage > previousStage) {
+                this.tweens.add({
+                    targets: blueFill,
+                    width: ((gameState.stage) * (800 / gameState.maxStage)) - 48,
+                    duration: 2000,
+                    ease: 'Quad.easeInOut',
+                    onUpdate: () => {
+                        if (blueFill) {
+                            blueFill.setSize(blueFill.width, 64);
+                        } else {
+                            console.log('blueFill is undefined during tween update');
+                        }
+                    },
+                    onComplete: () => {
+                        previousStage = gameState.stage;
+                        updateTween();
+                    }
+                });
+            }
+            else if (gameState.stage === gameState.maxStage) {
+                console.log('Game Complete!')
+            }
+        };
+
+        //updateTween();
         
         // Loop to create numberpad buttons with sprite image
         for (let row = 0; row < 4; row++) {
@@ -303,13 +313,14 @@ class GameScene extends Phaser.Scene {
         gameState.nextButton.on('pointerdown', () => {
             updateTween();
             gameState.nextButton.setVisible(false);
-
+            this.logTextContainer.removeAll(true);
+            gameState.updatedLogCount = 0;
             gameState.solutions = [];
             gameState.userProgress = 0;
             gameState.result = 0;
-            this.logContainer.removeAll(true);
+            this.logTextContainer.removeAll(true);
             this.problem = this.createProblem();
-            this.logContainer.add(this.add.bitmapText(0, 0, 'VCR_osd_mono', this.problem.text, 32).setTint(0x000000));
+            this.logTextContainer.add(this.add.bitmapText(36, 0, 'VCR_osd_mono', this.problem.text, 28).setTint(0x000000));
             this.currentProblemText.setText(this.problem.text);
             console.log(`Current Stage: ${gameState.stage}`);
         });
@@ -484,12 +495,16 @@ class GameScene extends Phaser.Scene {
 
     //Method to update the log with user input and result
     updateLog(result) {
-        const newLog = this.add.bitmapText(0, (0 + this.logContainer.list.length * 48), 'VCR_osd_mono', this.userOperatorText.text + this.userInputText.text, 32).setTint(0xFF0000);
+        // User input logged
+        const newLog = this.add.bitmapText(36, (48 + gameState.updatedLogCount * 48), 'VCR_osd_mono', this.userOperatorText.text + this.userInputText.text, 24).setTint(0xFF0000);
         newLog.setTint(0xFF0000)
-        this.logContainer.add(newLog);
+        this.logTextContainer.add(newLog);
+        gameState.updatedLogCount ++;
 
-        const nextLog = this.add.bitmapText(0, (0 + this.logContainer.list.length * 48), 'VCR_osd_mono', result, 32).setTint(0x000000);
-        this.logContainer.add(nextLog);
+        // Next displayed equation logged
+        const nextLog = this.add.bitmapText(36, (48 + gameState.updatedLogCount * 48), 'VCR_osd_mono', result, 28).setTint(0x000000);
+        this.logTextContainer.add(nextLog);
+        gameState.updatedLogCount ++;
     };
 
     // **** WIP Post-Game Completion Popup message
@@ -583,6 +598,7 @@ class GameScene extends Phaser.Scene {
         gameState.userProgress = 0;
         gameState.result = 0;
         gameState.stage = 0;
+        gameState.updatedLogCount = 0;
     };
 
 
