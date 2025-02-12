@@ -100,8 +100,7 @@ class GameScene extends Phaser.Scene {
         const titleBg = this.add.nineslice(this.cameras.main.width - 40, 80, 'ui', 'box_yellow', 384, 125, 48, 48, 48, 48).setOrigin(1,0);
         const logBg = this.add.nineslice(0, 0, 'ui', 'box_yellow', 384, 415, 48, 48, 48, 48).setOrigin(0, 0);
         const progressBar = this.add.nineslice(32, 32, 'ui', 'progressbar', 800, 112, 48, 48, 24, 24).setScale(0.4).setOrigin(0, 0);
-        const blueFill = this.add.nineslice((32 + 10), (32 + 9), 'ui', 'fill_blue', 48, 64, 24, 24, 24, 24).setScale(0.4).setOrigin(0, 0);
-        console.log(progressBar.width)
+        const blueFill = this.add.nineslice((32 + 10), (32 + 9), 'ui', 'fill_blue', 36, 64, 24, 24, 24, 24).setScale(0.4).setOrigin(0, 0);
         const titleText = this.add.bitmapText(titleBg.x - titleBg.width/2, titleBg.y + titleBg.height/2, 'VCR_osd_mono', 'One Variable Equations', 24).setOrigin(0.5, 0.5).setTint(0x000000);
         const logText = this.add.bitmapText(36, 100, 'VCR_osd_mono', 'Log', 24).setTint(0x0000FF);
         
@@ -133,6 +132,10 @@ class GameScene extends Phaser.Scene {
                     onComplete: () => {
                         previousStage = gameState.stage;
                         updateTween();
+                            if (gameState.stage === gameState.maxStage){
+                                this.currentProblemText.setText('CODE CRACKED!');
+                                this.showPopup('SUCCESS');
+                            }
                     }
                 });
             }
@@ -141,8 +144,6 @@ class GameScene extends Phaser.Scene {
             }
         };
 
-        //updateTween();
-        
         // Loop to create numberpad buttons with sprite image
         for (let row = 0; row < 4; row++) {
             for (let col = 0; col < 3; col++) {
@@ -324,10 +325,6 @@ class GameScene extends Phaser.Scene {
             this.currentProblemText.setText(this.problem.text);
             console.log(`Current Stage: ${gameState.stage}`);
         });
-
-        //this.showPopup('SUCCESS');
-
-
     }
 
     update() 
@@ -475,10 +472,6 @@ class GameScene extends Phaser.Scene {
                     gameState.solutions.shift();
                     gameState.stage ++;
                     gameState.nextButton.setVisible(true);
-                    
-                    if (gameState.stage > gameState.maxStage) {
-                        this.showPopup('SUCCESS');
-                    };
                     }
                     
                 else {
@@ -558,6 +551,7 @@ class GameScene extends Phaser.Scene {
         option1.on("pointerdown", () => {
             popup.destroy();
             overlay.destroy();
+            this.resetGame();
             this.scene.restart("GameScene");
             console.log('Playing Again...')
         });
@@ -583,6 +577,7 @@ class GameScene extends Phaser.Scene {
             popup.destroy();
             overlay.destroy();
             this.scene.restart("GameScene");
+            this.resetGame();
             console.log('**GAME RESTARTED**')
             this.scene.stop('GameScene');
             console.log('**GAMESCENE STOPPED**')
