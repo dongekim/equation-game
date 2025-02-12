@@ -1,4 +1,4 @@
-import Preloader from "/Preloader.js";
+import Preloader from "./Preloader.js";
 
 const gameState = {
     stage: 0,

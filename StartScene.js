@@ -1,4 +1,4 @@
-import Preloader from "/Preloader.js";
+import Preloader from "./Preloader.js";
 
 class StartScene extends Phaser.Scene {
     constructor() {

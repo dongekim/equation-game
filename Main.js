@@ -1,6 +1,6 @@
-import Preloader from '/Preloader.js';
-import StartScene from '/StartScene.js';
-import GameScene from '/GameScene.js';
+import Preloader from './Preloader.js';
+import StartScene from './StartScene.js';
+import GameScene from './GameScene.js';
 
 const config = {
     type: Phaser.AUTO,
