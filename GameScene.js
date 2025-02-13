@@ -38,9 +38,7 @@ class GameScene extends Phaser.Scene {
     create() 
     {
         const background = this.add.image(0, 0, 'background').setOrigin(0, 0).setAlpha(0.7);
-
-        // BACKGROUND IMAGE SETUP, CHANGE TO BETTER BACKGROUND LATER
-        const monitor = this.add.image(40, 80, 'monitor').setOrigin(0, 0);
+        const monitor = this.add.image(48, 80, 'monitor').setOrigin(0, 0);
         monitor.setScale(1.078, 1);
 
         // Keeps track of previous stage number to compare against current stage number
@@ -104,7 +102,7 @@ class GameScene extends Phaser.Scene {
         const titleText = this.add.bitmapText(titleBg.x - titleBg.width/2, titleBg.y + titleBg.height/2, 'VCR_osd_mono', 'One Variable Equations', 24).setOrigin(0.5, 0.5).setTint(0x000000);
         const logText = this.add.bitmapText(36, 100, 'VCR_osd_mono', 'Log', 24).setTint(0x0000FF);
         
-        this.logContainer = this.add.container(856, 200);
+        this.logContainer = this.add.container(856, 240);
 
         const initialLog = this.add.bitmapText(36, 0, 'VCR_osd_mono', this.currentProblemText.text, 32).setTint(0x000000);
 
@@ -113,7 +111,54 @@ class GameScene extends Phaser.Scene {
         this.logTextContainer = this.add.container(856, (this.logContainer.y + 160));
         this.logTextContainer.add([initialLog]);
 
-        
+        // Instructions UI
+        this.instContainer = this.add.container(856, 240);
+        const instBg = this.add.nineslice(0, 0, 'ui', 'box_yellow', 384, 415, 48, 48, 48, 48).setOrigin(0, 0).setTint(0x87f518);
+        const instHeader = this.add.bitmapText(instBg.width / 2, 36, 'VCR_osd_mono', 'Instructions', 28).setOrigin(0.5, 0);
+        const instBody = this.add.text(instBg.width / 2, 100, 'Solve for your variable step-by-step.\n\n1. Isolate the variable term.\n    Add or subtract away the constant\n\n2. Isolate the variable.\n    Divide the coefficient away', {
+            fontFamily: 'Arial',
+            fontSize: '20px',
+            color: '#000000',
+            align: 'left',
+            wordWrap: { width: 384 },
+            lineSpacing: 4
+        }).setOrigin(0.5, 0);
+        const instFooter = this.add.text(instBg.width / 2, instBody.y + instBody.height + 60, '*Try solving on paper and compare your work with this game!', {
+            fontFamily: 'Arial',
+            fontSize: '16px',
+            color: '#000000',
+            align: 'left',
+            wordWrap: { width: 336 },
+            lineSpacing: 4
+        }).setOrigin(0.5, 0);
+
+        this.instContainer.add([instBg, instHeader, instBody, instFooter]);
+
+
+        // Instructions shortcut button
+        const instButton = this.add.sprite(this.cameras.main.width * 0.8, this.cameras.main.height * 0.05, 'keypad_orange').setScale(0.5).setInteractive();
+        const instButtonText = this.add.bitmapText(instButton.x, instButton.y, 'VCR_osd_mono', '?', 24).setTint(0x071013).setOrigin(0.5);
+        instButton.on('pointerover', () => {
+            instButton.setFrame(3);
+        });
+        instButton.on('pointerout', () => {
+            instButton.setFrame(0);
+        });
+        instButton.on('pointerdown', () => {
+            if (!this.instContainer.visible) {
+                instButton.setFrame(1);
+                instButton.setAlpha(0.5);
+                this.instContainer.setVisible(!this.instContainer.visible);
+            }
+            else {
+                instButton.setFrame(0);
+                instButton.setAlpha(1);
+                this.instContainer.setVisible(!this.instContainer.visible);
+            }
+        });
+
+
+
         // Tween to animate progress bar
         const updateTween = () => {
             if (gameState.stage > previousStage) {
@@ -237,8 +282,8 @@ class GameScene extends Phaser.Scene {
         };
        
        //Displays user selected numbers on screen
-       this.userOperatorText = this.add.bitmapText(258, 80 + monitor.height + 48, 'VCR_osd_mono', '', 50).setLetterSpacing(0);
-       this.userInputText = this.add.bitmapText(this.userOperatorText.x + this.userOperatorText.width + 38, 80 + monitor.height + 48, 'VCR_osd_mono', '', 50).setLetterSpacing(0);
+       this.userOperatorText = this.add.bitmapText(320, 80 + monitor.height + 48, 'VCR_osd_mono', '', 50).setLetterSpacing(0).setOrigin(0, 0);
+       this.userInputText = this.add.bitmapText(this.userOperatorText.x + this.userOperatorText.width + 38, 80 + monitor.height + 48, 'VCR_osd_mono', '', 50).setLetterSpacing(0).setOrigin(0,0);
 
         //Loop to create DEL and ENTER options
         for (let row = 0; row < 2; row++) {
@@ -435,13 +480,14 @@ class GameScene extends Phaser.Scene {
 
             if (gameState.userProgress === 0) {
                 if (userAnswer === gameState.solutions[0]){
+                    this.instContainer.setVisible(false);
                     console.log('step 1 correct');
                     const result0 = this.solveProblem(gameState.userProgress);
                     this.updateLog(result0);
-                    this.userInputText.setText('Good!');
+                    this.userInputText.setText('Good!').setOrigin(0.3, 0);
                     this.userOperatorText.setText('');
                     setTimeout(() => {
-                        this.userInputText.setText('');
+                        this.userInputText.setText('').setOrigin(0, 0);
                     }, 1000);
                     this.currentProblemText.setText(result0);
                     gameState.userProgress ++;
@@ -449,10 +495,10 @@ class GameScene extends Phaser.Scene {
                     }
                 else {
                     console.log('incorrect');
-                    this.userInputText.setText('Error');
+                    this.userInputText.setText('Error').setOrigin(0.3, 0);
                     this.userOperatorText.setText('');
                     setTimeout(() => {
-                        this.userInputText.setText('');
+                        this.userInputText.setText('').setOrigin(0, 0);
                     }, 1000);
                     }
             }
@@ -462,10 +508,10 @@ class GameScene extends Phaser.Scene {
                     console.log('step 2 correct');
                     const solution1 = this.solveProblem(gameState.userProgress);
                     this.updateLog(solution1);
-                    this.userInputText.setText('Good!');
+                    this.userInputText.setText('Good!').setOrigin(0.3, 0);
                     this.userOperatorText.setText('');
                     setTimeout(() => {
-                        this.userInputText.setText('');
+                        this.userInputText.setText('').setOrigin(0, 0);
                     }, 1000);
                     this.currentProblemText.setText(solution1);
                     gameState.userProgress ++;
@@ -476,10 +522,10 @@ class GameScene extends Phaser.Scene {
                     
                 else {
                     console.log('incorrect');
-                    this.userInputText.setText('Error');
+                    this.userInputText.setText('Error').setOrigin(0.3, 0);
                     this.userOperatorText.setText('');
                     setTimeout(() => {
-                        this.userInputText.setText('');
+                        this.userInputText.setText('').setOrigin(0, 0);
                     }, 1000);
                     }
             }
