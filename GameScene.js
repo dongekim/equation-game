@@ -38,7 +38,7 @@ class GameScene extends Phaser.Scene {
     create() 
     {
         const background = this.add.image(0, 0, 'background').setOrigin(0, 0).setAlpha(0.7);
-        const monitor = this.add.image(48, 80, 'monitor').setOrigin(0, 0);
+        const monitor = this.add.image(48, 80, 'monitor').setOrigin(0, 0).setAlpha(0.9);
         monitor.setScale(1.078, 1);
 
         // Keeps track of previous stage number to compare against current stage number
